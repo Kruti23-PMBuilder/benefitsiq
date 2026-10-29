@@ -59,6 +59,7 @@ async function handler(req, res) {
       }
       console.error('BenefitsIQ Claude request failed', { status: upstream.status, code });
     return res.status(upstream.status === 429 ? 429 : 502).json({ error: error + ' Claude said: ' + message, code, providerStatus: upstream.status });
+    }
     const data = await upstream.json();
     if (data.stop_reason === 'max_tokens') return res.status(502).json({ error: 'The AI reply was incomplete. Please try again.' });
     const result = data.content?.find(block => block.type === 'tool_use' && block.name === 'coverage_summary')?.input;
