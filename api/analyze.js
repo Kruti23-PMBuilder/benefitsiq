@@ -37,8 +37,28 @@ async function handler(req, res) {
         tool_choice: { type: 'tool', name: 'coverage_summary' } })
     });
     if (!upstream.ok) {
-      const status = upstream.status === 429 ? 429 : 502;
-      return res.status(status).json({ error: upstream.status === 429 ? 'The AI service is busy. Please try later.' : 'The AI request failed. The owner should check model access, credits and server settings.' });
+      let detail = {};
+      try { detail = await upstream.json(); } catch {}
+      const message = typeof detail.error?.message === 'string' ? detail.error.message : '';
+      let code = 'provider_error';
+      let error = 'Claude returned an error. Please retry; if it persists, check the Vercel runtime logs.';
+      if (/credit|billing|balance/i.test(message)) {
+        code = 'billing_error'; error = 'Claude API billing or credits blocked this request. Add API credits in the Claude Console.';
+      } else if (upstream.status === 401) {
+        code = 'invalid_api_key'; error = 'Claude rejected the API key. Replace ANTHROPIC_API_KEY in Vercel and redeploy.';
+      } else if (upstream.status === 404 || /model/i.test(message) && upstream.status === 400) {
+        code = 'model_error'; error = 'Claude rejected the configured model. Set ANTHROPIC_MODEL to an API model ID available to your account and redeploy.';
+      } else if (upstream.status === 403) {
+        code = 'permission_error'; error = 'Claude denied access. Check the API key workspace permissions and model access.';
+      } else if (upstream.status === 429) {
+        code = 'rate_limit'; error = 'Claude API usage limit reached. Wait before retrying and check your account limits.';
+      } else if (upstream.status === 400) {
+        code = 'invalid_request'; error = 'Claude rejected the request format or model settings. The server request needs investigation.';
+      } else if (upstream.status === 529 || upstream.status >= 500) {
+        code = 'provider_unavailable'; error = 'Claude is temporarily unavailable. Please retry shortly.';
+      }
+      console.error('BenefitsIQ Claude request failed', { status: upstream.status, code });
+      return res.status(upstream.status === 429 ? 429 : 502).json({ error, code, providerStatus: upstream.status });
     }
     const data = await upstream.json();
     if (data.stop_reason === 'max_tokens') return res.status(502).json({ error: 'The AI reply was incomplete. Please try again.' });

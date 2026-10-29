@@ -53,6 +53,23 @@ test('endpoint authenticates and only accepts server-owned cases; valid live-sha
     global.fetch = async () => ({ ok: false, status: 401, json: async () => ({ error: process.env.ANTHROPIC_API_KEY }) });
     output = res(); await analyze(req('POST', { caseKey: 'MBR-008' }, cookie), output); assert.equal(output.statusCode, 502);
     assert(!JSON.stringify(output).includes(process.env.ANTHROPIC_API_KEY));
+    assert.equal(output.data.code, 'invalid_api_key');
+    for (const [status, message, code] of [
+      [400, 'Your credit balance is too low', 'billing_error'],
+      [404, 'model not found', 'model_error'],
+      [400, 'model does not support tool_choice', 'model_error'],
+      [403, 'Forbidden', 'permission_error'],
+      [429, 'Rate limit', 'rate_limit'],
+      [400, 'Invalid tools', 'invalid_request'],
+      [529, 'Overloaded', 'provider_unavailable']
+    ]) {
+      global.fetch = async () => ({ ok: false, status, json: async () => ({ error: { message: message + process.env.ANTHROPIC_API_KEY } }) });
+      output = res(); await analyze(req('POST', { caseKey: 'MBR-008' }, cookie), output);
+      assert.equal(output.data.code, code);
+      assert.equal(output.data.providerStatus, status);
+      assert(!JSON.stringify(output).includes(process.env.ANTHROPIC_API_KEY));
+    }
+
   } finally { global.fetch = original; }
 });
 test('built UI parses, has no visitor key helper, and cannot serve server files', () => {
