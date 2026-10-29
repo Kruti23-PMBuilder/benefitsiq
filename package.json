@@ -1,0 +1,14 @@
+{
+  "name": "benefitsiq",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BenefitsIQ synthetic benefits investigation demo",
+  "scripts": {
+    "build": "node scripts/build.cjs",
+    "start": "node scripts/dev.cjs",
+    "test": "node --test tests/server.test.cjs"
+  },
+  "engines": {
+    "node": "24.x"
+  }
+}

@@ -1,0 +1,2072 @@
+<!doctype html>
+<html lang="en" data-skin="studio">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BenefitsIQ: Coverage Truth Layer</title>
+<style>
+/* PF-DESIGN-START
+   The look ships in the kit. Product Faculty capstone design tokens and parts.
+   Rules for whoever builds on this page:
+   - Keep this block as it is. Use ONLY these tokens for colour, type, spacing, radius and shadow.
+   - No new colours. No new fonts. No emoji as icons. Nothing smaller than 13px.
+   - One skin per product: data-skin="ops" | "studio" | "term" on <html>. See DESIGN.md. */
+:root {
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --fs-0: 13px; --fs-1: 14px; --fs-2: 16px; --fs-3: 20px; --fs-4: 28px; --lh: 1.5;
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px;
+  --radius: 10px; --radius-sm: 6px; --border-w: 1px;
+  /* status colours, the same in every skin */
+  --ok: #1FA971; --warn: #D98E04; --danger: #D64545; --info: #3B82F6;
+}
+/* Operations: dark, calm. Internal tools, queues, triage. */
+:root, [data-skin="ops"] {
+  --bg: #0F1420; --bg-raise: #171E2E; --bg-inset: #0B0F18; --line: #263049;
+  --ink: #E8EDF7; --ink-2: #9AA6BF; --ink-3: #7C89A6;
+  --accent: #6C8CFF; --accent-ink: #FFFFFF; --chip: #1E2740;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px -12px rgba(0,0,0,.55);
+  --font-body: var(--font-ui);
+}
+/* Studio: light, clean. Customer-facing tools, business users. */
+[data-skin="studio"] {
+  --bg: #F6F7FB; --bg-raise: #FFFFFF; --bg-inset: #EEF0F6; --line: #E1E5EF;
+  --ink: #131A2A; --ink-2: #4C5670; --ink-3: #6B7490;
+  --accent: #4056C9; --accent-ink: #FFFFFF; --chip: #EDF0FA;
+  --shadow: 0 1px 2px rgba(19,26,42,.06), 0 12px 28px -14px rgba(19,26,42,.18);
+  --font-body: var(--font-ui);
+}
+/* Terminal: mono. Developer and data tools. */
+[data-skin="term"] {
+  --bg: #0C0F0C; --bg-raise: #121712; --bg-inset: #080B08; --line: #223122;
+  --ink: #D7F5DC; --ink-2: #8FBE97; --ink-3: #6E9A76;
+  --accent: #35D07F; --accent-ink: #06130A; --chip: #16301E;
+  --shadow: 0 0 0 1px rgba(53,208,127,.08), 0 12px 32px -14px rgba(0,0,0,.7);
+  --font-body: var(--font-mono);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: var(--fs-1); line-height: var(--lh); }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* top bar */
+.topbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); padding: var(--sp-3) var(--sp-5); background: var(--bg-raise); border-bottom: var(--border-w) solid var(--line); }
+.topbar .product { margin: 0; font-size: var(--fs-2); font-weight: 700; letter-spacing: .01em; }
+.topbar .meta { color: var(--ink-3); font-size: var(--fs-0); margin-left: auto; }
+.tabs { display: inline-flex; gap: var(--sp-1); padding: 3px; border-radius: var(--radius-sm); background: var(--bg-inset); border: var(--border-w) solid var(--line); }
+.tab { padding: 5px 14px; border: 0; border-radius: 4px; background: transparent; color: var(--ink-2); font: 700 var(--fs-0)/1.5 var(--font-body); letter-spacing: .04em; cursor: pointer; }
+.tab.is-active { background: var(--accent); color: var(--accent-ink); }
+
+/* layout */
+.console { display: grid; grid-template-columns: 300px minmax(0, 1fr) 320px; gap: var(--sp-4); padding: var(--sp-4); align-items: start; }
+.page { display: grid; gap: var(--sp-4); padding: var(--sp-4); max-width: 1100px; margin: 0 auto; }
+@media (max-width: 1100px) { .console { grid-template-columns: minmax(0, 1fr); } }
+.panel { min-width: 0; background: var(--bg-raise); border: var(--border-w) solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.panel-head { padding: var(--sp-3) var(--sp-4); border-bottom: var(--border-w) solid var(--line); font-size: var(--fs-0); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+.panel-body { padding: var(--sp-4); }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); }
+.hint { margin: 0 0 var(--sp-2); color: var(--ink-3); font-size: var(--fs-0); }
+.muted { color: var(--ink-2); }
+
+/* stage labels: the loop, named on screen */
+.stage { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-0); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: var(--sp-5) 0 var(--sp-2); }
+.stage:first-child { margin-top: 0; }
+.stage::before { content: attr(data-n); display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: 13px; letter-spacing: 0; }
+
+/* cards, chips */
+.case-card { display: block; width: 100%; text-align: left; padding: var(--sp-3) var(--sp-4); border: var(--border-w) solid var(--line); border-radius: var(--radius-sm); background: var(--bg-raise); color: var(--ink); font: inherit; cursor: pointer; margin-bottom: var(--sp-2); }
+.case-card:hover { border-color: var(--accent); }
+.case-card.is-active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+.case-card .id { display: flex; justify-content: space-between; gap: var(--sp-2); font-family: var(--font-mono); font-size: var(--fs-0); color: var(--ink-3); }
+.case-card .title { display: block; font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-4); }
+.chip { display: inline-flex; align-items: center; gap: var(--sp-1); padding: 4px 12px; border-radius: 999px; background: var(--chip); color: var(--ink-2); border: var(--border-w) solid var(--line); font: 600 var(--fs-0)/1.5 var(--font-body); cursor: pointer; }
+.chip:hover, .chip.is-active { color: var(--ink); border-color: var(--accent); }
+.chip[data-state]::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.chip[data-state="Approved"] { color: var(--ok); } .chip[data-state="Edited"] { color: var(--warn); } .chip[data-state="Escalated"], .chip[data-state="Rejected"] { color: var(--danger); }
+.chip.cite { cursor: default; font-family: var(--font-mono); }
+.chip.cite.is-unknown { color: var(--warn); border-color: var(--warn); }
+
+/* labelled fields: judged in under a minute */
+.field { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: var(--sp-3); padding: var(--sp-2) 0; border-bottom: var(--border-w) solid var(--line); }
+.field:last-child { border-bottom: 0; }
+.field .k { font-size: var(--fs-0); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); padding-top: 2px; }
+.field .v { color: var(--ink); overflow-wrap: anywhere; white-space: pre-wrap; }
+.field .v.why { color: var(--ink-2); font-style: italic; }
+@media (max-width: 560px) { .field { grid-template-columns: minmax(0, 1fr); gap: var(--sp-1); } }
+
+/* status */
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: var(--fs-0); font-weight: 700; letter-spacing: .04em; }
+.badge::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.badge.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); }
+.badge.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+.badge.danger { color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.badge.info { color: var(--info); background: color-mix(in srgb, var(--info) 14%, transparent); }
+.badge.neutral { color: var(--ink-2); background: var(--chip); }
+
+/* buttons: the human gate */
+.btn { display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 36px; padding: 8px 18px; border-radius: var(--radius-sm); border: var(--border-w) solid var(--line); background: var(--bg-raise); color: var(--ink); font: 700 var(--fs-1)/1.2 var(--font-body); cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.approve { background: var(--ok); border-color: var(--ok); color: #fff; }
+.btn.danger { background: transparent; border-color: var(--danger); color: var(--danger); }
+.btn.danger:hover:not(:disabled) { background: var(--danger); color: #fff; }
+.boundary-note { font-size: var(--fs-0); color: var(--ink-2); border-left: 2px solid var(--accent); padding-left: var(--sp-3); margin: var(--sp-3) 0 0; }
+
+/* form controls */
+.input, textarea.input, select.input { width: 100%; padding: 8px 10px; border-radius: var(--radius-sm); border: var(--border-w) solid var(--line); background: var(--bg-inset); color: var(--ink); font: var(--fs-1)/var(--lh) var(--font-body); }
+textarea.input { min-height: 96px; resize: vertical; }
+.label { display: grid; gap: var(--sp-1); font-size: var(--fs-0); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+
+/* run log */
+.log { background: var(--bg-inset); border: var(--border-w) solid var(--line); border-radius: var(--radius-sm); padding: var(--sp-3); font-family: var(--font-mono); font-size: var(--fs-0); max-height: 420px; overflow: auto; }
+.log .line { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-3); padding: 3px 0; color: var(--ink-2); }
+.log .line .t { color: var(--ink-3); flex: none; }
+.log .action-approve { color: var(--ok); } .log .action-edit { color: var(--warn); } .log .action-escalate, .log .action-reject { color: var(--danger); }
+
+/* evals */
+.scoreboard { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-4); }
+@media (max-width: 560px) { .scoreboard { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stat { padding: var(--sp-4); text-align: center; background: var(--bg-raise); border: var(--border-w) solid var(--line); border-radius: var(--radius); }
+.stat .n { font-size: var(--fs-4); font-weight: 800; line-height: 1.1; }
+.stat .l { font-size: var(--fs-0); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+.stat.ok .n { color: var(--ok); } .stat.warn .n { color: var(--warn); } .stat.danger .n { color: var(--danger); }
+.evals-table { width: 100%; border-collapse: collapse; font-size: var(--fs-1); }
+.evals-table th { text-align: left; font-size: var(--fs-0); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); padding: var(--sp-2) var(--sp-3); border-bottom: var(--border-w) solid var(--line); }
+.evals-table td { padding: var(--sp-3); border-bottom: var(--border-w) solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
+.evals-table th:last-child { width: 240px; }
+.evals-table td:first-child { min-width: 136px; overflow-wrap: normal; }
+@media (max-width: 760px) {
+  .evals-table thead { display: none; }
+  .evals-table tr { display: block; padding: var(--sp-3) 0; border-bottom: var(--border-w) solid var(--line); }
+  .evals-table td { display: block; padding: var(--sp-1) 0; border: 0; }
+  .evals-table td::before { content: attr(data-label); display: block; font-size: var(--fs-0); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+}
+
+/* states: no dead screens */
+.thinking { display: inline-flex; align-items: center; gap: var(--sp-2); color: var(--info); font-weight: 600; }
+.thinking::before { content: ""; width: 12px; height: 12px; border: 2px solid var(--info); border-top-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .thinking::before { animation: none; } }
+.empty { padding: var(--sp-6) var(--sp-4); text-align: center; color: var(--ink-2); }
+.empty .headline { font-size: var(--fs-3); font-weight: 700; color: var(--ink); margin-bottom: var(--sp-2); }
+.error-note { margin: var(--sp-3) 0 0; padding: var(--sp-3) var(--sp-4); border-radius: var(--radius-sm); border: var(--border-w) solid var(--danger); background: color-mix(in srgb, var(--danger) 8%, transparent); color: var(--danger); font-size: var(--fs-1); }
+figure.picture { margin: var(--sp-3) 0 0; }
+figure.picture img { display: block; max-width: 100%; max-height: 240px; border: var(--border-w) solid var(--line); border-radius: var(--radius-sm); }
+figure.picture.is-large img { max-height: 560px; }   /* a document a person compares with the output */
+figure.picture figcaption { margin-top: var(--sp-1); color: var(--ink-3); font-size: var(--fs-0); }
+details.source { margin-top: var(--sp-2); }
+details.source summary { cursor: pointer; color: var(--ink-2); font-size: var(--fs-0); font-weight: 600; }
+details.source p { margin: var(--sp-1) 0 0; padding-left: var(--sp-3); border-left: 2px solid var(--line); color: var(--ink-2); font-size: var(--fs-0); }
+/* PF-DESIGN-END */
+/* ============ CareTrack Rx shell + BenefitsIQ. Every colour is a kit token or a --bq brand variable below. ============ */
+:root { --bq-navy: #1E1B4B; --bq-navy-soft: #ECEBF5; --bq-green: #22C55E; --bq-green-ink: #16A34A; --bq-green-soft: #DCFCE7;
+  --bq-amber: #D97706; --bq-amber-soft: #FEF3C7; --bq-blue: #2563EB; --bq-blue-soft: #DBEAFE; --bq-red: #DC2626; --bq-red-soft: #FEE2E2;
+  --bq-muted: #64647A; --bq-white: #FFFFFF; --bq-tint: #F1F1F7; --bq-line: #E5E5EE; --bq-bg: #F7F7FB;
+  --bq-shadow: 0 1px 3px rgba(30,27,75,.06), 0 4px 16px -4px rgba(30,27,75,.08); --bq-elev: 0 10px 30px -10px rgba(30,27,75,.45); }
+body { background: var(--bg-inset); }
+.ic { display: inline-flex; flex: none; width: 16px; height: 16px; }
+.ic svg { width: 100%; height: 100%; display: block; }
+
+/* app bar */
+.ehr-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-4); padding: var(--sp-2) var(--sp-4); background: var(--ink); color: var(--bg-raise); }
+.ehr-logo { display: flex; align-items: center; gap: var(--sp-2); margin: 0; font-size: var(--fs-2); font-weight: 800; }
+.ehr-logo .ic { width: 22px; height: 22px; color: color-mix(in srgb, var(--accent) 50%, var(--bg-raise)); }
+.ehr-logo small { font-size: var(--fs-0); font-weight: 600; color: color-mix(in srgb, var(--bg-raise) 65%, var(--ink)); }
+.ehr-menu { display: flex; flex-wrap: wrap; gap: 2px; }
+.ehr-menu button { min-height: 32px; padding: 6px 12px; border: 0; border-radius: var(--radius-sm); background: transparent; color: color-mix(in srgb, var(--bg-raise) 72%, var(--ink)); font: 600 var(--fs-0)/1 var(--font-body); cursor: pointer; }
+.ehr-menu button:hover, .ehr-menu button.is-active { background: color-mix(in srgb, var(--bg-raise) 14%, transparent); color: var(--bg-raise); }
+.ehr-user { margin-left: auto; display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-0); color: color-mix(in srgb, var(--bg-raise) 72%, var(--ink)); }
+.ehr-user .av { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.sub-bar { padding: var(--sp-2) var(--sp-4); }
+
+/* shell */
+.ehr-shell { display: grid; grid-template-columns: 290px minmax(0, 1fr) 270px; gap: var(--sp-3); padding: var(--sp-3); align-items: start; }
+@media (max-width: 1180px) { .ehr-shell { grid-template-columns: minmax(0, 1fr); } }
+.pane { min-width: 0; background: var(--bg-raise); border: var(--border-w) solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.pane-head { display: flex; justify-content: space-between; gap: var(--sp-2); padding: var(--sp-3) var(--sp-4); border-bottom: var(--border-w) solid var(--line); font-size: var(--fs-0); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.pane-body { padding: var(--sp-3) var(--sp-4); }
+
+/* worklist */
+.wl-list { max-height: 760px; overflow: auto; }
+.wl-row { display: block; width: 100%; padding: var(--sp-3) var(--sp-4); border: 0; border-bottom: var(--border-w) solid var(--line); border-left: 3px solid transparent; background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.wl-row:hover { background: var(--bg-inset); }
+.wl-row.is-active { background: color-mix(in srgb, var(--accent) 9%, var(--bg-raise)); border-left-color: var(--accent); }
+.wl-row .r1 { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2); font-weight: 700; }
+.wl-row .r1 .d { font-weight: 500; font-size: var(--fs-0); color: var(--ink-3); }
+.wl-row .r2 { display: block; font-size: var(--fs-0); color: var(--ink-2); }
+.wl-tag { display: inline-block; margin-top: var(--sp-1); padding: 1px 8px; border-radius: 999px; background: var(--bq-navy-soft); color: var(--bq-navy); font-size: var(--fs-0); font-weight: 600; }
+.wl-tag.demo { background: var(--bq-amber-soft); color: var(--bq-amber); }
+
+/* patient header, stepper, toolbar */
+.ws { display: flex; flex-direction: column; }
+.pt-head { display: flex; gap: var(--sp-4); align-items: center; padding: var(--sp-4) var(--sp-5); border-bottom: var(--border-w) solid var(--line); background: color-mix(in srgb, var(--accent) 4%, var(--bg-raise)); }
+.pt-av { flex: none; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--accent); color: var(--accent-ink); font-size: var(--fs-3); font-weight: 700; }
+.pt-name { font-size: var(--fs-3); font-weight: 700; line-height: 1.25; }
+.pt-name .mrn { margin-left: var(--sp-2); font: 600 var(--fs-0)/1 var(--font-mono); color: var(--ink-3); }
+.pt-line { color: var(--ink-2); }
+.pt-line .badge { margin-left: var(--sp-1); }
+.stepper { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5); padding: var(--sp-2) var(--sp-5); border-bottom: var(--border-w) solid var(--line); }
+.stepper:empty { display: none; }
+.step { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-0); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.step i { font-style: normal; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--bg-inset); border: 1px solid var(--line); color: var(--ink-3); font-size: 13px; letter-spacing: 0; }
+.step.done { color: var(--ink); } .step.done i { background: var(--ok); border-color: var(--ok); color: var(--bq-white); }
+.step.now { color: var(--accent); } .step.now i { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.act-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-3); padding: var(--sp-4) var(--sp-5); }
+.act-toolbar h2 { margin: 0; font-size: var(--fs-2); }
+.act-toolbar p { margin: 2px 0 0; font-size: var(--fs-0); color: var(--ink-3); }
+.ws-body { display: flex; flex-direction: column; gap: var(--sp-3); padding: 0 var(--sp-5) var(--sp-5); }
+
+/* the one BenefitsIQ button */
+.run-wrap { display: grid; gap: var(--sp-2); }
+.biq-btn { display: inline-flex; align-items: center; gap: var(--sp-3); min-height: 52px; padding: 8px 20px 8px 8px; border: 1px solid var(--bq-navy); border-radius: 14px; background: var(--bq-navy); color: var(--bq-white); text-align: left; cursor: pointer; box-shadow: var(--bq-elev); font-family: var(--font-body); }
+.biq-btn:disabled { cursor: progress; }
+.biq-btn > .ic { width: 38px; height: 38px; padding: 9px; border-radius: 10px; background: var(--bq-green); color: var(--bq-white); }
+.biq-btn .t1 { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-2); font-weight: 700; line-height: 1.2; }
+.biq-btn .t2 { display: block; font-size: var(--fs-0); color: color-mix(in srgb, var(--bq-white) 75%, transparent); }
+.biq-btn.is-quiet { background: var(--bq-white); color: var(--bq-navy); border-color: var(--line); box-shadow: none; min-height: 44px; }
+.biq-btn.is-quiet .t1 { font-size: var(--fs-1); } .biq-btn.is-quiet .t2 { color: var(--bq-muted); } .biq-btn.is-quiet > .ic { width: 30px; height: 30px; padding: 7px; }
+.ai-tag { display: inline-flex; align-items: center; gap: 3px; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--bq-green) 22%, transparent); color: var(--bq-green); font-size: var(--fs-0); font-weight: 700; }
+.ai-tag .ic { width: 13px; height: 13px; }
+.prog { height: 4px; border-radius: 4px; background: var(--bq-tint); overflow: hidden; }
+.prog i { display: block; height: 100%; width: 0; background: var(--bq-green); transition: width .2s; }
+
+/* folds: one style for every expand / collapse */
+.fold { border: 1px solid var(--bq-line); border-radius: 12px; background: var(--bq-white); }
+.fold > summary { display: flex; align-items: center; gap: var(--sp-2); min-height: 44px; padding: 10px 14px; cursor: pointer; list-style: none; font-weight: 600; color: var(--bq-navy); }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary:hover { background: var(--bq-bg); border-radius: 12px; }
+.fold > summary .ic { color: var(--bq-muted); }
+.fold > summary .chev { transition: transform .15s; }
+.fold[open] > summary .chev { transform: rotate(90deg); }
+.fold > summary .t { flex: 1 1 auto; }
+.fold > summary .m { font-weight: 500; font-size: var(--fs-0); color: var(--bq-muted); }
+.fold-body { padding: var(--sp-2) var(--sp-4) var(--sp-3); border-top: 1px solid var(--bq-line); }
+.pane .fold { margin-top: var(--sp-3); }
+
+/* source rows (connected sources and evidence) */
+.src-row { border-bottom: 1px solid var(--bq-tint); }
+.src-row:last-child { border-bottom: 0; }
+.src-row > summary { display: grid; grid-template-columns: 16px 16px minmax(120px, 190px) minmax(0, 1fr) auto; gap: var(--sp-2); align-items: center; padding: 8px 0; cursor: pointer; list-style: none; font-size: var(--fs-0); }
+.src-row > summary::-webkit-details-marker { display: none; }
+.src-row > summary .chev { color: var(--bq-muted); transition: transform .15s; }
+.src-row[open] > summary .chev { transform: rotate(90deg); }
+.src-row > summary .ic { color: var(--accent); }
+.src-row > summary b { color: var(--bq-navy); }
+.src-row > summary .brief { color: var(--bq-muted); overflow-wrap: anywhere; }
+.src-row.is-reading > summary { color: var(--info); }
+@media (max-width: 640px) { .src-row > summary { grid-template-columns: 16px 16px minmax(0, 1fr) auto; } .src-row > summary .brief { grid-column: 3 / -1; } }
+.src-raw { margin: 0 0 var(--sp-2) 40px; padding: var(--sp-2) var(--sp-3); border-radius: 8px; background: var(--bq-bg); font-size: var(--fs-0); color: var(--ink-2); }
+.src-raw .sys { font-family: var(--font-mono); color: var(--ink-3); }
+.src-raw .gap { margin-top: var(--sp-1); color: var(--bq-amber); }
+.src-raw ul { margin: var(--sp-1) 0 0; padding-left: 18px; }
+
+/* pills */
+.bq-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: var(--fs-0); font-weight: 600; line-height: 1.35; background: var(--bq-tint); color: var(--bq-navy); }
+.bq-pill .ic { width: 14px; height: 14px; }
+.p-green { background: var(--bq-green-soft); color: var(--bq-green-ink); }
+.p-amber { background: var(--bq-amber-soft); color: var(--bq-amber); }
+.p-blue { background: var(--bq-blue-soft); color: var(--bq-blue); }
+.p-red { background: var(--bq-red-soft); color: var(--bq-red); }
+.p-navy { background: var(--bq-navy); color: var(--bq-white); }
+
+/* the Coverage Truth Summary card */
+.bq-logo { width: 36px; height: 36px; padding: 9px; border-radius: 10px; background: var(--bq-navy); color: var(--bq-white); }
+.bq-logo.lg { width: 64px; height: 64px; padding: 16px; border-radius: 16px; display: flex; margin: 0 auto var(--sp-3); }
+.bq-card { overflow: hidden; border: 1px solid var(--bq-line); border-radius: 16px; background: var(--bq-white); box-shadow: var(--bq-shadow); color: var(--bq-navy); }
+.bq-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--bq-line); background: linear-gradient(135deg, var(--bq-navy-soft), var(--bq-green-soft)); }
+.bq-head.is-red { background: linear-gradient(135deg, var(--bq-red-soft), var(--bq-white)); }
+.bq-head.is-amber { background: linear-gradient(135deg, var(--bq-amber-soft), var(--bq-white)); }
+.bq-brand { flex: 1 1 220px; }
+.bq-name { font-size: var(--fs-2); font-weight: 800; }
+.bq-sub { font-size: var(--fs-0); color: var(--bq-muted); }
+.bq-conf { min-width: 190px; text-align: right; font-size: var(--fs-0); color: var(--bq-muted); }
+.bq-conf b { font-size: var(--fs-2); }
+.bq-meter { height: 7px; margin-top: 4px; border-radius: 9px; background: color-mix(in srgb, var(--bq-navy) 10%, transparent); overflow: hidden; }
+.bq-meter i { display: block; height: 100%; border-radius: 9px; }
+.bq-body { padding: var(--sp-4); }
+.rec { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-2); font-weight: 700; }
+.rec .ic { width: 20px; height: 20px; }
+.tone-green { color: var(--bq-green-ink); } .tone-amber { color: var(--bq-amber); } .tone-red { color: var(--bq-red); }
+.one { margin: var(--sp-1) 0 var(--sp-3); color: var(--ink-2); }
+.rule-line { display: flex; gap: var(--sp-2); align-items: flex-start; margin: 0 0 var(--sp-3); padding: var(--sp-2) var(--sp-3); border-radius: 10px; background: var(--bq-red-soft); color: var(--bq-navy); font-weight: 600; font-size: var(--fs-0); }
+.rule-line .ic { color: var(--bq-red); }
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--sp-6); border-top: 1px solid var(--bq-tint); }
+@media (max-width: 700px) { .facts { grid-template-columns: minmax(0, 1fr); } }
+.fact { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-3); padding: 9px 0; border-bottom: 1px solid var(--bq-tint); }
+.fact .k { color: var(--bq-muted); flex: none; }
+.fact .bq-pill { text-align: right; border-radius: 10px; }
+.attn { margin-top: var(--sp-3); padding: var(--sp-3) var(--sp-4); border-radius: 12px; border: 1px solid color-mix(in srgb, var(--bq-amber) 40%, transparent); background: color-mix(in srgb, var(--bq-amber-soft) 60%, var(--bq-white)); }
+.attn.is-red { border-color: color-mix(in srgb, var(--bq-red) 35%, transparent); background: color-mix(in srgb, var(--bq-red-soft) 60%, var(--bq-white)); }
+.attn h4 { display: flex; align-items: center; gap: 6px; margin: 0 0 var(--sp-1); font-size: var(--fs-0); letter-spacing: .06em; text-transform: uppercase; color: var(--bq-amber); }
+.attn.is-red h4 { color: var(--bq-red); }
+.attn ul { margin: 0; padding-left: 20px; }
+.acts { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; margin: var(--sp-4) 0 var(--sp-3); }
+.acts .boundary-note { margin: 0 0 0 auto; border: 0; padding: 0; }
+.checks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--sp-3); }
+#why { margin: 0; line-height: 1.6; }
+.bq-body .fold + .fold { margin-top: var(--sp-2); }
+.edit-grid { display: grid; gap: var(--sp-3); margin: 0 0 var(--sp-3); padding: var(--sp-3); border-radius: 12px; background: var(--bq-bg); }
+
+/* handoff (review before routing) */
+.handoff { overflow: hidden; border: 1px solid var(--bq-line); border-radius: 16px; background: var(--bq-white); box-shadow: var(--bq-shadow); color: var(--bq-navy); }
+.hh { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); background: var(--bq-navy); color: var(--bq-white); }
+.hh .bq-logo { background: var(--bq-green); }
+.hh b { font-size: var(--fs-2); }
+.hh small { display: block; font-size: var(--fs-0); color: color-mix(in srgb, var(--bq-white) 75%, transparent); }
+.hb { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: var(--sp-4); padding: var(--sp-4); }
+@media (max-width: 860px) { .hb { grid-template-columns: minmax(0, 1fr); } }
+.box { border: 1px solid var(--bq-line); border-radius: 12px; padding: var(--sp-3) var(--sp-4); }
+.box + .box { margin-top: var(--sp-3); }
+.box h5 { margin: 0 0 var(--sp-2); font-size: var(--fs-0); letter-spacing: .06em; text-transform: uppercase; color: var(--bq-muted); }
+.kv2 { display: flex; justify-content: space-between; gap: var(--sp-3); padding: 5px 0; border-bottom: 1px solid var(--bq-tint); font-size: var(--fs-0); }
+.kv2:last-child { border-bottom: 0; }
+.kv2 span { color: var(--bq-muted); } .kv2 b { text-align: right; }
+.chk { display: flex; gap: var(--sp-2); align-items: center; padding: 3px 0; font-size: var(--fs-0); }
+.chk .ic { color: var(--bq-green-ink); }
+.task { display: flex; gap: var(--sp-3); padding: var(--sp-2) 0; border-bottom: 1px solid var(--bq-tint); font-size: var(--fs-0); }
+.task:last-child { border-bottom: 0; }
+.task .n { flex: none; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bq-navy-soft); font-weight: 700; }
+.task b { display: block; } .task span { color: var(--bq-muted); }
+.script { padding: var(--sp-2) var(--sp-3); border-radius: 10px; background: var(--bq-bg); font-size: var(--fs-0); font-style: italic; }
+.hf { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; padding: var(--sp-3) var(--sp-4); border-top: 1px solid var(--bq-line); background: var(--bq-bg); }
+.hf .boundary-note { margin: 0 0 0 auto; border: 0; padding: 0; }
+
+/* routed / held */
+.routed { padding: var(--sp-4) var(--sp-5); border: 1px solid color-mix(in srgb, var(--bq-green) 45%, transparent); border-radius: 16px; background: color-mix(in srgb, var(--bq-green-soft) 45%, var(--bq-white)); color: var(--bq-navy); }
+.routed.is-held { border-color: color-mix(in srgb, var(--bq-red) 35%, transparent); background: color-mix(in srgb, var(--bq-red-soft) 45%, var(--bq-white)); }
+.routed .top { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: center; }
+.routed .top > .ic { width: 24px; height: 24px; color: var(--bq-green-ink); }
+.routed.is-held .top > .ic { color: var(--bq-red); }
+.routed .big { font-size: var(--fs-2); font-weight: 800; color: var(--bq-green-ink); }
+.routed.is-held .big { color: var(--bq-red); }
+.routed .top > div { flex: 1 1 300px; }
+.journey { display: flex; margin-top: var(--sp-4); }
+.journey div { flex: 1; position: relative; padding-top: 24px; text-align: center; font-size: var(--fs-0); color: var(--bq-muted); }
+.journey div::before { content: ""; position: absolute; top: 7px; left: 0; right: 0; height: 3px; background: var(--bq-tint); }
+.journey div.d::before { background: var(--bq-green); }
+.journey div i { position: absolute; top: 0; left: 50%; margin-left: -9px; width: 18px; height: 18px; border-radius: 50%; background: var(--bq-white); border: 3px solid var(--bq-line); }
+.journey div.d i { background: var(--bq-green); border-color: var(--bq-green); }
+.journey div.n i { border-color: var(--info); }
+.journey div b { display: block; color: var(--bq-navy); }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-2); margin-top: var(--sp-4); }
+@media (max-width: 700px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .journey { flex-wrap: wrap; row-gap: var(--sp-3); } .journey div { flex: 1 1 33%; } }
+.stat2 { padding: var(--sp-2) var(--sp-3); border: 1px solid var(--bq-line); border-radius: 12px; background: var(--bq-white); }
+.stat2 b { display: block; font-size: var(--fs-3); }
+.stat2 span { font-size: var(--fs-0); color: var(--bq-muted); }
+
+/* right rail */
+.wf { list-style: none; margin: 0; padding: 0; }
+.wf li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: var(--sp-2); padding: 6px 0; font-size: var(--fs-0); color: var(--ink-3); }
+.wf .dot { width: 20px; height: 20px; padding: 3px; border-radius: 50%; border: 2px solid var(--line); background: var(--bg-raise); color: var(--bq-white); }
+.wf li.done .dot { background: var(--ok); border-color: var(--ok); }
+.wf li.now .dot { border-color: var(--info); }
+.wf li.held .dot { background: var(--danger); border-color: var(--danger); }
+.wf li b { display: block; color: var(--ink); }
+
+.ws-empty { padding: 120px var(--sp-5); text-align: center; color: var(--ink-2); }
+.ws-empty .headline { font-size: var(--fs-3); font-weight: 700; color: var(--ink); margin-bottom: var(--sp-2); }
+.ws-empty p { max-width: 460px; margin: 0 auto; }
+.toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 40; max-width: calc(100% - 32px); padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-sm); background: var(--ink); color: var(--bg-raise); font-size: var(--fs-0); box-shadow: var(--shadow); }
+.chk-row { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; font-size: var(--fs-0); color: var(--bq-muted); }
+.checks { display: grid; gap: 6px; }
+.pt-note { margin-top: 2px; font-size: var(--fs-0); color: var(--ink-3); font-style: italic; }
+.unknown-row { display: flex; gap: var(--sp-2); align-items: center; padding: 8px 0; font-size: var(--fs-0); color: var(--bq-amber); }
+.routed .hint { margin: var(--sp-2) 0 0; }
+.handoff textarea.input { min-height: 72px; }
+
+/* At a glance card (only what CareTrack already holds) */
+.glance > summary { flex-wrap: wrap; }
+.glance > summary b { color: var(--bq-navy); }
+.glance > summary .g-line { flex: 1 1 300px; font-weight: 500; color: var(--ink-2); }
+.glance[open] > summary .g-line { display: none; }
+.glance:not([open]) > summary .g-src { display: none; }
+.glance[open] > summary .g-src { margin-left: auto; }
+.glance[open] > summary { border-bottom: 1px solid var(--bq-line); border-radius: 12px 12px 0 0; background: var(--bq-bg); }
+.g-body { padding: var(--sp-3) var(--sp-4) var(--sp-4); }
+.g-story { margin: 0 0 var(--sp-3); font-size: var(--fs-2); line-height: 1.55; color: var(--bq-navy); }
+.g-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-2); }
+@media (max-width: 760px) { .g-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.g-tile { padding: var(--sp-2) var(--sp-3); border: 1px solid var(--bq-line); border-radius: 12px; min-width: 0; }
+.g-tile .k { font-size: var(--fs-0); color: var(--bq-muted); }
+.g-tile .v { font-size: var(--fs-2); font-weight: 700; color: var(--bq-navy); }
+.g-tile .s { font-size: var(--fs-0); color: var(--bq-muted); overflow-wrap: anywhere; }
+.g-tile.is-warn { border-color: color-mix(in srgb, var(--bq-amber) 45%, transparent); background: color-mix(in srgb, var(--bq-amber-soft) 55%, var(--bq-white)); }
+.g-tile.is-warn .v { color: var(--bq-amber); }
+.g-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--sp-3); }
+
+/* Live view while BenefitsIQ works */
+.live { overflow: hidden; border: 1px solid color-mix(in srgb, var(--bq-navy) 22%, transparent); border-radius: 16px; background: var(--bq-white); box-shadow: var(--bq-elev); color: var(--bq-navy); }
+.live .lh { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); background: var(--bq-navy); color: var(--bq-white); }
+.live .lh .bq-logo { background: var(--bq-green); }
+.live .lh b { font-size: var(--fs-1); }
+.live .lh small { display: block; font-size: var(--fs-0); color: color-mix(in srgb, var(--bq-white) 72%, transparent); }
+.live .lh > div:nth-child(2) { flex: 1 1 260px; }
+.live .pct { min-width: 210px; text-align: right; font-size: var(--fs-0); color: color-mix(in srgb, var(--bq-white) 72%, transparent); }
+.live .pct b { font-size: var(--fs-1); color: var(--bq-white); }
+.lbar { height: 4px; margin-top: 5px; border-radius: 4px; overflow: hidden; background: color-mix(in srgb, var(--bq-white) 18%, transparent); }
+.lbar i { display: block; height: 100%; background: var(--bq-green); transition: width .25s; }
+.lb { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); }
+@media (max-width: 860px) { .lb { grid-template-columns: minmax(0, 1fr); } }
+.lb > div { padding: var(--sp-3) var(--sp-4); }
+.lb > div + div { border-left: 1px solid var(--bq-tint); background: var(--bq-bg); }
+.live .eyebrow { margin: 0 0 var(--sp-1); font-size: var(--fs-0); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--bq-muted); }
+.sr { display: grid; grid-template-columns: 22px minmax(110px, 170px) minmax(0, 1fr); gap: var(--sp-2); align-items: start; padding: 7px 0; border-bottom: 1px solid var(--bq-tint); font-size: var(--fs-0); }
+.sr:last-child { border-bottom: 0; }
+.sr .f { color: var(--ink-2); overflow-wrap: anywhere; }
+.sr .f.is-warn { color: var(--bq-amber); font-weight: 600; }
+.sr.sn .f { color: var(--info); font-style: italic; }
+.sr.sw, .sr.sw b { color: var(--ink-3); }
+.rs { display: flex; gap: var(--sp-2); align-items: flex-start; padding: 7px 0; border-bottom: 1px solid var(--bq-tint); font-size: var(--fs-0); }
+.rs:last-child { border-bottom: 0; }
+.rs small { display: block; color: var(--bq-muted); }
+.rs.sw { color: var(--ink-3); }
+.sr .st, .rs .st { flex: none; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--bq-line); }
+.sr.sd .st, .rs.sd .st { background: var(--bq-green); border-color: var(--bq-green); color: var(--bq-white); }
+.sr.sd .st .ic, .rs.sd .st .ic { width: 12px; height: 12px; }
+.sr.sn .st, .rs.sn .st { border-color: var(--info); border-top-color: transparent; animation: spin .8s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .sr.sn .st, .rs.sn .st { animation: none; } }
+.lnote { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--sp-2); padding: var(--sp-2) var(--sp-4); border-top: 1px solid var(--bq-tint); font-size: var(--fs-0); color: var(--bq-muted); }
+
+/* Capstone build: BenefitsIQ parts mapped onto the kit's design tokens only (DESIGN.md: no new colours). */
+:root { --bq-navy: var(--ink); --bq-navy-soft: var(--chip); --bq-white: var(--bg-raise); --bq-tint: var(--bg-inset); --bq-bg: var(--bg-inset); --bq-line: var(--line); --bq-muted: var(--ink-3);
+  --bq-green: var(--ok); --bq-green-ink: var(--ok); --bq-green-soft: color-mix(in srgb, var(--ok) 14%, var(--bg-raise));
+  --bq-amber: var(--warn); --bq-amber-soft: color-mix(in srgb, var(--warn) 14%, var(--bg-raise));
+  --bq-blue: var(--info); --bq-blue-soft: color-mix(in srgb, var(--info) 14%, var(--bg-raise));
+  --bq-red: var(--danger); --bq-red-soft: color-mix(in srgb, var(--danger) 14%, var(--bg-raise));
+  --bq-shadow: var(--shadow); --bq-elev: var(--shadow); }
+</style>
+</head>
+<body>
+<p class="hint" style="margin:8px 24px">Synthetic decision support: Approved = formulary support only, not PA approval or permission to dispense. Cost-share rules are not final patient payment. Exclusions apply only to the documented benefit path.</p>
+<header class="ehr-bar">
+  <h1 class="ehr-logo"><span class="ic" data-icon="caretrack"></span>CareTrack Rx <small>Specialty Pharmacy</small></h1>
+  <nav class="ehr-menu" aria-label="CareTrack menu">
+    <button type="button" class="is-active" data-soon="">Worklist</button>
+    <button type="button" data-soon="Patient Lookup">Patient Lookup</button>
+    <button type="button" data-soon="In Basket">In Basket</button>
+    <button type="button" data-soon="Prior Auth Queue">Prior Auth Queue</button>
+    <button type="button" data-soon="Reports">Reports</button>
+  </nav>
+  <span class="ehr-user"><span class="av">PA</span>Patient Access Coordinator · Specialty Intake (demo user)</span>
+</header>
+<div class="topbar sub-bar">
+  <span class="badge warn" id="mode">Sample mode: results are examples, not AI</span>
+  <button type="button" class="btn" id="use-ai">Use real AI</button>
+  <nav class="tabs" aria-label="Views">
+    <button type="button" class="tab is-active" data-view="console" aria-pressed="true">Case workspace</button>
+    <button type="button" class="tab" data-view="evals" aria-pressed="false">Evals</button>
+  </nav>
+  <span class="meta">Synthetic patient and payer data. Human review required.</span>
+</div>
+
+<main class="ehr-shell" id="view-console">
+  <section class="pane" aria-label="Worklist">
+    <div class="pane-head">My worklist <span id="wl-count"></span></div>
+    <div class="wl-list" id="queue"></div>
+  </section>
+
+  <section class="pane ws" aria-label="Patient workspace" id="loop">
+    <div class="ws-empty" id="empty">
+      <span class="ic bq-logo lg" data-icon="activity"></span>
+      <div class="headline">Select a referral to start</div>
+      <p>BenefitsIQ reads the connected systems for you and returns one coverage answer to review.</p>
+    </div>
+    <div id="work" hidden>
+      <div id="case"></div>
+      <div class="stepper" id="stepper"></div>
+      <div class="act-toolbar">
+        <div class="ttl"><h2>Benefits Investigation</h2><p id="refreshed">Coverage data from connected systems</p></div>
+        <div class="run-wrap">
+          <button type="button" class="biq-btn" id="run"><span class="ic" data-icon="activity"></span><span><span class="t1"><span id="run-label">Use BenefitsIQ</span><span class="ai-tag" id="ai-tag"><span class="ic" data-icon="sparkles"></span>AI</span></span><span class="t2" id="run-sub">Analyze coverage across connected sources</span></span></button>
+          <div class="prog" id="prog" hidden><i id="prog-bar"></i></div>
+        </div>
+      </div>
+      <div class="ws-body">
+        <span class="thinking" id="status" role="status" hidden>BenefitsIQ is reading the connected sources</span>
+        <p class="error-note" id="error" role="alert" hidden></p>
+        <details class="fold glance" id="glance" hidden></details>
+        <div class="live" id="live" hidden role="status" aria-live="polite"></div>
+        <details class="fold" id="sources-fold"><summary><span class="ic chev" data-icon="chevron-r"></span><span class="ic" data-icon="db"></span><span class="t">Connected sources</span><span class="m" id="sources-meta"></span></summary><div class="fold-body" id="sources"></div></details>
+
+        <div class="bq-card" id="result" hidden>
+          <div class="bq-head" id="bq-head">
+            <span class="ic bq-logo" data-icon="activity"></span>
+            <div class="bq-brand"><div class="bq-name">BenefitsIQ · Coverage Truth Summary</div><div class="bq-sub" id="origin"></div></div>
+            <div class="bq-conf" id="meter"></div>
+          </div>
+          <div class="bq-body">
+            <div class="rec" id="verdict"></div>
+            <p class="one" id="summary-line"></p>
+            <p class="rule-line" id="rule" hidden></p>
+            <div class="facts" id="fields"></div>
+            <div class="attn" id="attn" hidden></div>
+            <div class="acts">
+              <button type="button" class="btn approve" id="approve">Approve &amp; route</button>
+              <button type="button" class="btn" id="edit">Edit &amp; approve</button>
+              <button type="button" class="btn danger" id="reject">Reject</button>
+              <button type="button" class="btn danger" id="escalate">Escalate</button>
+              <span class="boundary-note">Nothing is routed without your approval.</span>
+            </div>
+            <p class="hint" id="gate-note" hidden></p>
+            <div class="edit-grid" id="edit-box" hidden>
+              <div class="row" style="align-items: stretch">
+                <label class="label" style="flex: 1 1 160px">Benefit type <select class="input" id="edit-benefit"><option>Pharmacy</option><option>Medical</option><option>Unclear</option></select></label>
+                <label class="label" style="flex: 1 1 160px">PA required <select class="input" id="edit-pa"><option>Required</option><option>Not required</option><option>Unclear</option><option>Not applicable</option></select></label>
+                <label class="label" style="flex: 2 1 240px">Route to <select class="input" id="edit-route"></select></label>
+              </div>
+              <label class="label">Recommended next action <textarea class="input" id="edit-action"></textarea></label>
+              <label class="label">Missing information, one per line <textarea class="input" id="edit-missing"></textarea></label>
+              <label class="label">Reviewer note: context BenefitsIQ could not see <input class="input" id="edit-note" maxlength="200"></label>
+              <div class="row"><button type="button" class="btn approve" id="edit-go">Save edit and continue</button><button type="button" class="btn" id="edit-cancel">Cancel</button></div>
+            </div>
+            <div id="reason-box" hidden class="edit-grid">
+              <label class="label"><span id="reason-label">Reason, in one line</span> <input class="input" id="reason" maxlength="160"></label>
+              <div class="row"><button type="button" class="btn danger" id="reason-go">Record</button><button type="button" class="btn" id="reason-cancel">Cancel</button></div>
+            </div>
+            <details class="fold" id="think"><summary><span class="ic chev" data-icon="chevron-r"></span><span class="ic" data-icon="sparkles"></span><span class="t">Why BenefitsIQ recommends this</span><span class="m" id="think-meta"></span></summary>
+              <div class="fold-body"><p id="why"></p><div class="checks" id="checks"></div></div></details>
+            <details class="fold" id="evidence"><summary><span class="ic chev" data-icon="chevron-r"></span><span class="ic" data-icon="db"></span><span class="t">Evidence</span><span class="m" id="evidence-meta"></span></summary>
+              <div class="fold-body" id="cites"></div></details>
+          </div>
+        </div>
+
+        <div class="handoff" id="handoff" hidden></div>
+        <div id="route" hidden></div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="pane" aria-label="Case status and audit trail">
+    <div class="pane-head">Case status</div>
+    <div class="pane-body"><ol class="wf" id="wf"></ol>
+      <details class="fold" id="audit"><summary><span class="ic chev" data-icon="chevron-r"></span><span class="t">Audit trail</span><span class="m" id="audit-meta"></span></summary>
+        <div class="fold-body"><div class="log" id="log"></div><div class="row" style="margin-top: var(--sp-3)"><button type="button" class="btn" id="download" disabled>Download (CSV)</button></div></div></details>
+    </div>
+  </aside>
+</main>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<main class="page" id="view-evals" hidden>
+  <div class="scoreboard" id="scoreboard"></div>
+  <section class="panel" aria-label="Eval cases">
+    <div class="panel-head" id="evals-head"></div>
+    <div class="panel-body">
+      <p class="hint" id="evals-note">Approved means formulary support only, never PA or dispense approval. Cost-share rules are estimates, not final patient payment. Run each case, read what the agent actually did, then choose the verdict yourself. The agent does not grade itself. Test runs stay out of the case audit trail.</p>
+      <table class="evals-table"><thead><tr><th>Case</th><th>Expected</th><th>Actual</th><th>Verdict</th></tr></thead><tbody id="evals"></tbody></table>
+    </div>
+  </section>
+  <section class="panel" aria-label="Improvement made">
+    <div class="panel-head">Improvement made</div>
+    <div class="panel-body" style="display: grid; gap: var(--sp-3)">
+      <label class="label">Before: what went wrong <textarea class="input" id="imp-before"></textarea></label>
+      <label class="label">Change: the one thing that was changed, and why <textarea class="input" id="imp-change"></textarea></label>
+      <label class="label">After: what the same case does now <textarea class="input" id="imp-after"></textarea></label>
+    </div>
+  </section>
+  <section class="panel" aria-label="Synthetic data">
+    <div class="panel-head">Synthetic data (all made up)</div>
+    <div class="panel-body">
+      <p class="hint">The data BenefitsIQ reads, as the files named in the plan. members.json and the CSV include the held-back answer key (ground_truth_determination), which is never sent to the AI. The downloads are generated from the embedded synthetic data on this page.</p>
+      <div class="row"><button type="button" class="btn" id="dl-plans">Download plans.json</button><button type="button" class="btn" id="dl-members">Download members.json</button><button type="button" class="btn" id="dl-csv">Download members_summary.csv</button></div>
+    </div>
+  </section>
+  <section class="panel" aria-label="Known limitations">
+    <div class="panel-head">Known limitations</div>
+    <div class="panel-body"><ul id="limits" style="margin: 0; padding-left: 18px"></ul></div>
+  </section>
+  <div class="row">
+    <button type="button" class="btn primary" id="copy-results">Copy results</button>
+    <span class="muted" id="copied" role="status"></span>
+  </div>
+  <textarea class="input" id="results-text" hidden readonly aria-label="Results as text"></textarea>
+</main>
+
+<script>
+/* PFAI-HELPER-START v1. Product Faculty connection helper. Include this block unchanged. */
+(function () {
+  'use strict';
+  if (window.PFAI && window.PFAI.version) return;
+var PF_CORE = (function () {
+  'use strict';
+  // One request shape for every prototype. The hosted page and the helper inside a prototype both use this code,
+  // so what works in a coding agent's preview works the same way once it is hosted.
+  var DEFAULTS = { provider: 'anthropic', endpoint: 'https://api.anthropic.com', model: 'claude-opus-5-5', effort: 'low', maxTokens: 16000, timeoutMs: 120000 };
+  var LIMITS = { files: 8, fileChars: 8 * 1024 * 1024, totalChars: 14 * 1024 * 1024, messages: 40, textChars: 200000, systemChars: 40000 };
+  var IMAGE = /^image\/(png|jpeg|gif|webp)$/;
+  var TEXTUAL = /^(text\/[\w.+-]+|application\/(json|xml|csv))$/;
+  var WORDS = {
+    'not-connected': 'AI is not connected. Connect a key to run this for real.',
+    'unsupported-key': 'This page works with a Claude API key (it starts with sk-ant-). Keys from other services are not supported yet.',
+    'invalid-key': 'That key was not accepted. Check it and connect again.',
+    'no-access': 'This key is not allowed to use the AI model this page needs.',
+    'no-credit': 'This key has no credit left. Add credit to the account, or connect a different key.',
+    'rate-limited': 'Too many requests for this key right now. Wait a moment and try again.',
+    'overloaded': 'The AI service is busy. Try again in a moment.',
+    'too-large': 'That is too much to send in one go. Use a smaller file or less text.',
+    'unsupported-file': 'The AI cannot read that kind of file. Use a PNG, JPEG, GIF or WebP picture, a PDF, or a text file.',
+    'refused': 'The AI declined this request.',
+    'too-long': 'The answer was cut off before it finished. Ask for something shorter.',
+    'timeout': 'The AI took too long to answer. Try again.',
+    'network': 'The AI service could not be reached. Check your connection and try again.',
+    'bad-request': 'The AI service did not accept this request.',
+    'bad-reply': 'The AI answered in a form this page could not use. Try again.',
+    'busy': 'Still working on the previous request. Wait for it to finish.',
+    'unavailable': 'The AI service had a problem. Try again in a moment.'
+  };
+
+  function fail(code, detail) {
+    var error = new Error(WORDS[code] || WORDS['bad-request']);
+    error.name = 'PFAIError'; error.code = code;
+    if (detail) error.detail = String(detail).slice(0, 500);
+    return error;
+  }
+  function describe(error) {
+    if (error && error.name === 'PFAIError') return { code: error.code, message: error.message, detail: error.detail || '' };
+    return { code: 'unavailable', message: WORDS.unavailable, detail: error && error.message ? String(error.message).slice(0, 300) : '' };
+  }
+  function revive(shape) { var error = fail(shape && shape.code); if (shape && shape.message) error.message = shape.message; if (shape && shape.detail) error.detail = shape.detail; return error; }
+
+  function keyKind(key) {
+    var value = String(key || '').trim();
+    if (/^sk-ant-[\w-]{10,}$/.test(value)) return 'anthropic';
+    return value ? 'other' : 'empty';
+  }
+
+  /** A request as a prototype may send it, checked and tidied. Throws a PFAIError for anything else. */
+  function normalize(input) {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) throw fail('bad-request', 'The request must be an object.');
+    var messages = [];
+    if (Array.isArray(input.messages)) {
+      if (input.messages.length > LIMITS.messages) throw fail('too-large', 'Too many messages.');
+      input.messages.forEach(function (item) {
+        if (!item || (item.role !== 'user' && item.role !== 'assistant') || typeof item.content !== 'string') throw fail('bad-request', 'Each message needs a role of user or assistant and text content.');
+        if (item.content.length > LIMITS.textChars) throw fail('too-large', 'A message is too long.');
+        messages.push({ role: item.role, content: item.content });
+      });
+    }
+    if (typeof input.prompt === 'string' && input.prompt.trim()) {
+      if (input.prompt.length > LIMITS.textChars) throw fail('too-large', 'The prompt is too long.');
+      messages.push({ role: 'user', content: input.prompt });
+    }
+    if (!messages.length || messages[0].role !== 'user' || messages[messages.length - 1].role !== 'user') throw fail('bad-request', 'Send a prompt, or messages that start and end with the user.');
+    var system = typeof input.system === 'string' ? input.system : '';
+    if (system.length > LIMITS.systemChars) throw fail('too-large', 'The instructions are too long.');
+    var files = []; var total = 0;
+    (Array.isArray(input.files) ? input.files : []).forEach(function (file) {
+      if (!file || typeof file.data !== 'string' || typeof file.type !== 'string') throw fail('bad-request', 'Each file needs a type and base64 data.');
+      var type = file.type.toLowerCase().split(';')[0].trim();
+      if (type === 'image/jpg') type = 'image/jpeg';
+      if (!IMAGE.test(type) && type !== 'application/pdf' && !TEXTUAL.test(type)) throw fail('unsupported-file', type);
+      var data = file.data.replace(/^data:[^,]*,/, '').replace(/\s+/g, '');
+      if (!/^[A-Za-z0-9+/]*={0,2}$/.test(data.slice(0, 2000)) || !data.length) throw fail('bad-request', 'A file is not valid base64.');
+      if (data.length > LIMITS.fileChars) throw fail('too-large', 'A file is too large.');
+      total += data.length;
+      files.push({ name: String(file.name || 'file').slice(0, 120), type: type, data: data });
+    });
+    if (files.length > LIMITS.files) throw fail('too-large', 'Too many files.');
+    if (total > LIMITS.totalChars) throw fail('too-large', 'The files are too large together.');
+    var schema = input.schema && typeof input.schema === 'object' && !Array.isArray(input.schema) ? input.schema : null;
+    if (schema && JSON.stringify(schema).length > 20000) throw fail('too-large', 'The schema is too large.');
+    var maxTokens = Number(input.maxTokens);
+    return { system: system, messages: messages, files: files, json: input.json === true || Boolean(schema), schema: schema, maxTokens: maxTokens > 0 && isFinite(maxTokens) ? Math.floor(maxTokens) : 0 };
+  }
+
+  function decodeText(base64) {
+    var binary = atob(base64); var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+
+  function anthropicBody(config, request, options) {
+    var parts = request.files.map(function (file) {
+      if (file.type === 'application/pdf') return { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: file.data } };
+      if (IMAGE.test(file.type)) return { type: 'image', source: { type: 'base64', media_type: file.type, data: file.data } };
+      return { type: 'text', text: 'File: ' + file.name + '\n\n' + decodeText(file.data).slice(0, LIMITS.textChars) };
+    });
+    var last = request.messages.length - 1;
+    var messages = request.messages.map(function (item, index) {
+      // Files go before the words that refer to them, in the latest user turn.
+      if (index === last && parts.length) return { role: 'user', content: parts.concat([{ type: 'text', text: item.content }]) };
+      return { role: item.role, content: item.content };
+    });
+    var system = request.system;
+    if (request.json && !request.schema) system = (system ? system + '\n\n' : '') + 'Reply with one valid JSON value only. No code fences and no commentary.';
+    var body = { model: config.model, max_tokens: Math.min(request.maxTokens || config.maxTokens, config.maxTokens), messages: messages };
+    if (system) body.system = system;
+    var output = {};
+    if (config.effort && options.effort) output.effort = config.effort;
+    if (request.schema) output.format = { type: 'json_schema', schema: request.schema };
+    if (Object.keys(output).length) body.output_config = output;
+    if (options.fallbacks) body.fallbacks = 'default';
+    return body;
+  }
+
+  async function send(config, key, path, method, body, beta) {
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, config.timeoutMs);
+    var headers = { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' };
+    if (body) headers['content-type'] = 'application/json';
+    if (beta) headers['anthropic-beta'] = beta;
+    var response;
+    try {
+      response = await fetch(config.endpoint.replace(/\/+$/, '') + path, { method: method, headers: headers, body: body ? JSON.stringify(body) : undefined, signal: controller.signal, credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer' });
+    } catch (cause) {
+      throw fail(controller.signal.aborted ? 'timeout' : 'network', cause && cause.message);
+    } finally { clearTimeout(timer); }
+    var data = null; var text = '';
+    try { text = await response.text(); data = text ? JSON.parse(text) : null; } catch (ignore) { data = null; }
+    if (response.ok && data) return data;
+    var message = (data && data.error && data.error.message) || text.slice(0, 300) || ('HTTP ' + response.status);
+    var kind = (data && data.error && data.error.type) || '';
+    if (response.status === 401 || kind === 'authentication_error') throw fail('invalid-key', message);
+    if (/credit balance|billing/i.test(message)) throw fail('no-credit', message);
+    if (response.status === 403 || kind === 'permission_error') throw fail('no-access', message);
+    if (response.status === 404 && /model/i.test(message)) throw fail('no-access', message);
+    if (response.status === 413 || kind === 'request_too_large') throw fail('too-large', message);
+    if (response.status === 429 || kind === 'rate_limit_error') throw fail('rate-limited', message);
+    if (response.status === 529 || kind === 'overloaded_error') throw fail('overloaded', message);
+    if (response.status >= 500) throw fail('unavailable', message);
+    throw fail('bad-request', message);
+  }
+
+  /** Confirms the key is real without spending anything. */
+  async function checkKey(config, key) {
+    var kind = keyKind(key);
+    if (kind === 'empty') throw fail('not-connected');
+    if (kind !== 'anthropic') throw fail('unsupported-key');
+    await send(config, String(key).trim(), '/v1/models?limit=1', 'GET', null, '');
+    return { provider: 'anthropic' };
+  }
+
+  async function generate(config, key, input) {
+    if (!key) throw fail('not-connected');
+    var request = normalize(input);
+    var options = { effort: true, fallbacks: true };
+    var data;
+    for (var attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        data = await send(config, String(key).trim(), '/v1/messages', 'POST', anthropicBody(config, request, options), options.fallbacks ? 'server-side-fallback-2026-07-01' : '');
+        break;
+      } catch (error) {
+        // An optional extra the account or model does not take must never be the reason a prototype cannot run.
+        var detail = (error && error.detail) || '';
+        if (error.code === 'bad-request' && options.fallbacks && /fallback|anthropic-beta|beta header|unexpected.*beta/i.test(detail)) { options.fallbacks = false; continue; }
+        if (error.code === 'bad-request' && options.effort && /effort|output_config/i.test(detail) && !/format|schema/i.test(detail)) { options.effort = false; continue; }
+        throw error;
+      }
+    }
+    if (!data) throw fail('bad-request', 'No response.');
+    if (data.stop_reason === 'refusal') throw fail('refused', data.stop_details && data.stop_details.explanation);
+    var text = (Array.isArray(data.content) ? data.content : []).filter(function (block) { return block && block.type === 'text' && typeof block.text === 'string'; }).map(function (block) { return block.text; }).join('');
+    if (!text.trim()) throw fail(data.stop_reason === 'max_tokens' ? 'too-long' : 'unavailable', 'The reply had no text.');
+    return { text: text, truncated: data.stop_reason === 'max_tokens' };
+  }
+
+  /** The JSON value in a reply, tolerant of code fences and a sentence around it. Throws when there is none. */
+  function parseJson(text) {
+    var source = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+    try { return JSON.parse(source); } catch (ignore) { /* look inside */ }
+    var open = source.search(/[[{]/);
+    var close = Math.max(source.lastIndexOf('}'), source.lastIndexOf(']'));
+    if (open >= 0 && close > open) { try { return JSON.parse(source.slice(open, close + 1)); } catch (ignore2) { /* fall through */ } }
+    throw fail('bad-reply', 'The AI did not reply with JSON.');
+  }
+
+  return { DEFAULTS: DEFAULTS, LIMITS: LIMITS, WORDS: WORDS, fail: fail, describe: describe, revive: revive, keyKind: keyKind, normalize: normalize, checkKey: checkKey, generate: generate, parseJson: parseJson };
+})();
+  // --- Browser storage is not available on the hosted page. Keep it in memory for the visit instead of crashing.
+  function memoryStore() {
+    var items = {};
+    return {
+      getItem: function (key) { return Object.prototype.hasOwnProperty.call(items, key) ? items[key] : null; },
+      setItem: function (key, value) { items[key] = String(value); },
+      removeItem: function (key) { delete items[key]; },
+      clear: function () { items = {}; },
+      key: function (index) { var keys = Object.keys(items); return index < keys.length ? keys[index] : null; },
+      get length() { return Object.keys(items).length; }
+    };
+  }
+  ['localStorage', 'sessionStorage'].forEach(function (name) {
+    try { var store = window[name]; store.setItem('__pfai', '1'); store.removeItem('__pfai'); }
+    catch (blocked) { try { Object.defineProperty(window, name, { value: memoryStore(), configurable: true }); } catch (ignore) { /* nothing more to do */ } }
+  });
+
+  var state = { mode: 'starting', connected: false, provider: null };
+  var listeners = [];
+  var key = '';            // standalone preview only; never written anywhere
+  var port = null;         // hosted page only
+  var bar = null;          // standalone preview only. Declared before anything can paint it, so there is only ever one.
+  var room = null;         // empty space at the end of the page, as tall as the bar, so the bar never covers content
+  var waiting = {};
+  var counter = 0;
+  var config = PF_CORE.DEFAULTS;
+
+  function announce() {
+    var snapshot = { mode: state.mode, connected: state.connected, provider: state.provider };
+    listeners.slice().forEach(function (listener) { try { listener(snapshot); } catch (ignore) { /* a listener must not break the helper */ } });
+    paintBar();
+  }
+
+  // --- Hosted: the Product Faculty page around the prototype holds the visitor's key and makes the call.
+  function ask(type, payload) {
+    return new Promise(function (resolve, reject) {
+      counter += 1; var id = 'r' + counter;
+      waiting[id] = { resolve: resolve, reject: reject };
+      // The page around the prototype always answers. Should it ever not, the request ends instead of hanging.
+      setTimeout(function () { if (waiting[id]) { delete waiting[id]; reject(PF_CORE.fail('timeout')); } }, type === 'generate' ? config.timeoutMs + 20000 : 15000);
+      port.postMessage({ id: id, type: type, request: payload });
+    });
+  }
+  function onPortMessage(event) {
+    var message = event.data || {};
+    if (message.type === 'state') { state.connected = message.connected === true; state.provider = message.provider || null; announce(); return; }
+    var pending = message.id && waiting[message.id];
+    if (!pending) return;
+    delete waiting[message.id];
+    if (message.ok) pending.resolve(message.result); else pending.reject(PF_CORE.revive(message.error));
+  }
+  var ready = new Promise(function (resolve) {
+    var settled = false;
+    function settle(mode) {
+      if (settled) return; settled = true;
+      state.mode = mode; announce(); resolve({ mode: mode, connected: state.connected });
+    }
+    if (window.parent === window) { settle('standalone'); return; }
+    window.addEventListener('message', function (event) {
+      var data = event.data;
+      if (settled || event.source !== window.parent || !data || data.pfCapstone !== 1 || data.type !== 'welcome' || !event.ports || !event.ports[0]) return;
+      port = event.ports[0]; port.onmessage = onPortMessage;
+      state.connected = data.connected === true; state.provider = data.provider || null;
+      settle('hosted');
+    });
+    try { window.parent.postMessage({ pfCapstone: 1, type: 'hello', version: 1 }, '*'); } catch (ignore) { /* not hosted */ }
+    setTimeout(function () { settle('standalone'); }, 1500);
+  });
+
+  // --- Standalone preview: a small bar where the person trying the prototype connects their own key for this tab.
+  function paintBar() {
+    if (state.mode !== 'standalone' || !document.body) return;
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.setAttribute('data-pfai-bar', '');
+      bar.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483000;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px;border-radius:12px;background:#080739;color:#fff;font:14px/20px system-ui,sans-serif;box-shadow:0 6px 24px rgba(8,7,57,.28)';
+      document.body.appendChild(bar);
+      room = document.createElement('div');
+      room.setAttribute('data-pfai-room', ''); room.setAttribute('aria-hidden', 'true');
+      room.style.cssText = 'flex:none;width:100%;pointer-events:none';
+      document.body.appendChild(room);
+      // The bar grows when the window narrows and when a message appears in it. The room follows the bar itself.
+      if (typeof ResizeObserver === 'function') new ResizeObserver(makeRoom).observe(bar);
+      window.addEventListener('resize', makeRoom);
+    }
+    bar.textContent = '';
+    var label = document.createElement('span'); label.style.cssText = 'flex:1 1 220px;min-width:0';
+    var button = function (text, action) { var b = document.createElement('button'); b.type = 'button'; b.textContent = text; b.style.cssText = 'font:inherit;font-weight:600;padding:6px 14px;border-radius:999px;border:1px solid #FFAC40;background:#FFAC40;color:#080739;cursor:pointer'; b.addEventListener('click', action); return b; };
+    if (state.connected) {
+      label.textContent = 'AI connected for this tab. The key is kept in memory only.';
+      bar.appendChild(label);
+      bar.appendChild(button('Disconnect', function () { key = ''; state.connected = false; state.provider = null; announce(); }));
+      makeRoom();
+      return;
+    }
+    label.textContent = 'Sample mode. To run real AI, connect a Claude API key for this tab.';
+    var input = document.createElement('input');
+    input.type = 'password'; input.placeholder = 'sk-ant-…'; input.autocomplete = 'off'; input.spellcheck = false;
+    input.setAttribute('aria-label', 'Claude API key');
+    input.style.cssText = 'flex:1 1 200px;min-width:0;font:inherit;padding:6px 10px;border-radius:8px;border:1px solid #c9c9e0;background:#fff;color:#080739';
+    var note = document.createElement('span'); note.style.cssText = 'flex:1 1 100%;color:#FFD9A0'; note.setAttribute('role', 'status');
+    var go = button('Connect', function () {
+      go.disabled = true; note.textContent = 'Checking the key…'; makeRoom();
+      PF_CORE.checkKey(config, input.value).then(function (result) {
+        key = input.value.trim(); state.connected = true; state.provider = result.provider; announce();
+      }).catch(function (error) { go.disabled = false; note.textContent = PF_CORE.describe(error).message; makeRoom(); });
+    });
+    input.addEventListener('keydown', function (event) { if (event.key === 'Enter') go.click(); });
+    bar.appendChild(label); bar.appendChild(input); bar.appendChild(go); bar.appendChild(note);
+    makeRoom();
+  }
+  function makeRoom() { if (bar && room) room.style.height = (bar.offsetHeight + 24) + 'px'; }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', paintBar); else paintBar();
+
+  // Some systems hand over a file with no type; the name's ending says what it is.
+  var TYPES = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', pdf: 'application/pdf', txt: 'text/plain', md: 'text/plain', csv: 'text/csv', json: 'application/json' };
+  function typeOf(file) {
+    if (file.type) return file.type;
+    var ending = String(file.name || '').toLowerCase().split('.').pop();
+    return TYPES[ending] || 'application/octet-stream';
+  }
+  function fileToPart(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onerror = function () { reject(PF_CORE.fail('bad-request', 'The file could not be read.')); };
+      reader.onload = function () { resolve({ name: file.name || 'file', type: typeOf(file), data: String(reader.result).replace(/^data:[^,]*,/, '') }); };
+      reader.readAsDataURL(file);
+    });
+  }
+  /** A data: URL (for example a made-up example kept inside the page, or canvas.toDataURL()) as a file for generate(). */
+  function partFromDataUrl(dataUrl, name) {
+    // data:[type][;charset=…][;base64],content
+    var match = /^data:([^;,]*)((?:;[^;,]*)*),([\s\S]*)$/.exec(String(dataUrl || ''));
+    if (!match) throw PF_CORE.fail('bad-request', 'That is not a data: URL.');
+    var data = /;base64$/i.test(match[2]) ? match[3] : btoa(unescape(encodeURIComponent(decodeURIComponent(match[3]))));
+    return { name: name || 'example', type: match[1] || 'text/plain', data: data };
+  }
+  /** Plain text as a file for generate(). */
+  function partFromText(text, name) {
+    return { name: name || 'text.txt', type: 'text/plain', data: btoa(unescape(encodeURIComponent(String(text)))) };
+  }
+
+  window.PFAI = {
+    version: 1,
+    /** Resolves once the helper knows where it is running: { mode: 'hosted' | 'standalone', connected }. */
+    ready: ready,
+    /** True when a visitor has connected a key and real AI calls will run. Otherwise show your sample mode. */
+    connected: function () { return state.connected; },
+    /** Calls back at once with the state so far, and again each time it changes: { mode, connected, provider }.
+     *  Until PFAI.ready has resolved, connected is false. Use this to switch between sample mode and live. */
+    onChange: function (listener) { if (typeof listener === 'function') { listeners.push(listener); listener({ mode: state.mode, connected: state.connected, provider: state.provider }); } },
+    /** Opens the place where a visitor connects their key: the bar at the bottom when the page is opened by
+     *  itself, the "Connect your AI key" box of the Product Faculty page when hosted. Give the page a button for it. */
+    connect: function () { return ready.then(function () { if (state.mode === 'hosted') return ask('connect', null).catch(function () { return null; }); paintBar(); var field = bar && bar.querySelector('input'); if (field) field.focus(); return null; }); },
+    /**
+     * One AI request. { system?, prompt? | messages?, files?: [{ name, type, data(base64) }], json?: true, schema?, maxTokens? }
+     * Resolves to { text, json?, truncated }. Rejects with an error that has .code and a plain .message to show the user.
+     */
+    generate: function (request) {
+      return ready.then(function () {
+        var checked = PF_CORE.normalize(request);
+        if (!state.connected) throw PF_CORE.fail('not-connected');
+        return state.mode === 'hosted' ? ask('generate', checked) : PF_CORE.generate(config, key, checked);
+      }).then(function (result) {
+        var out = { text: result.text, truncated: result.truncated === true };
+        if (request && (request.json === true || request.schema)) out.json = PF_CORE.parseJson(result.text);
+        return out;
+      });
+    },
+    /** Turns a File from an <input type="file"> into the { name, type, data } shape generate() takes. */
+    fileToPart: fileToPart,
+    partFromDataUrl: partFromDataUrl,
+    partFromText: partFromText
+  };
+})();
+/* PFAI-HELPER-END */
+</script>
+<script>
+(function () {
+  'use strict';
+  // Build switch. false = the capstone build (kit rules). The pitch build for stakeholders sets it to true.
+  var PITCH = false;
+  // ================================================================ THE WORLD: made-up data, inside the page
+  // plans.json, in page form. Three fictional plans. Tiers 1-3 are flat copays, Tier 4 is coinsurance with a cap per fill.
+  var PLANS = {
+    'PLAN-A': { name: 'Everwell PPO Advantage', payer: 'Everwell Health (fictional)', group: 'GRP-EW-4410', bin: '610991', t1: 10, t2: 40, t3: 75, t4pct: 30, t4cap: 250 },
+    'PLAN-B': { name: 'UnityCare HMO Choice', payer: 'UnityCare (fictional)', group: 'GRP-UC-2207', bin: '610992', t1: 10, t2: 35, t3: 70, t4pct: 25, t4cap: 200 },
+    'PLAN-C': { name: 'PrimeHealth EPO Select', payer: 'PrimeHealth (fictional)', group: 'GRP-PH-8831', bin: '610993', t1: 15, t2: 45, t3: 80, t4pct: 33, t4cap: 300 }
+  };
+  var TIERS = { 1: 'Tier 1 (Generic)', 2: 'Tier 2 (Preferred Brand)', 3: 'Tier 3 (Non-Preferred Brand)', 4: 'Tier 4 (Specialty)' };
+  // Public drug names; every rule about them is invented.
+  var DRUGS = {
+    Humira: { benefit: 'Pharmacy', site: 'Self-administered at home' }, Enbrel: { benefit: 'Pharmacy', site: 'Self-administered at home' },
+    Otezla: { benefit: 'Pharmacy', site: 'Oral, at home' }, Cosentyx: { benefit: 'Pharmacy', site: 'Self-administered at home' },
+    Stelara: { benefit: 'Pharmacy', site: 'Self-administered at home' }, Skyrizi: { benefit: 'Pharmacy', site: 'Self-administered at home' },
+    Entyvio: { benefit: 'Medical', site: 'Approved infusion center only' }, Ocrevus: { benefit: 'Medical', site: 'Approved infusion center only' },
+    Kesimpta: { benefit: 'Pharmacy', site: 'Self-administered at home' }, Gleevec: { benefit: 'Pharmacy', site: 'Oral, at home' },
+    Sprycel: { benefit: 'Pharmacy', site: 'Oral, at home' }, Trikafta: { benefit: 'Pharmacy', site: 'Oral, at home' },
+    Ozempic: { benefit: 'Pharmacy', site: 'Self-administered at home' }, Wegovy: { benefit: 'Pharmacy', site: 'Self-administered at home' },
+    Epclusa: { benefit: 'Pharmacy', site: 'Oral, at home' }, Mavyret: { benefit: 'Pharmacy', site: 'Oral, at home' }
+  };
+  function R(tier, pa, step, days) { return { tier: tier, pa: pa, step: step || '', days: days || 30 }; }
+  var X = 'EXCLUDED';
+  var FORMULARY = {
+    'PLAN-A': { Humira: R(4, true, 'methotrexate'), Enbrel: R(4, true, 'methotrexate'), Otezla: R(4, true, 'topical corticosteroid'), Cosentyx: R(4, true, 'topical corticosteroid'), Stelara: R(4, true, 'azathioprine'), Skyrizi: R(4, true, 'topical corticosteroid'), Entyvio: R(4, true, 'azathioprine'), Ocrevus: R(4, true, 'interferon beta-1a'), Kesimpta: R(4, true), Gleevec: R(4, true), Sprycel: R(4, true, 'imatinib'), Trikafta: X, Ozempic: R(2, false, 'metformin'), Wegovy: R(3, true), Epclusa: R(4, true, '', 28), Mavyret: R(4, true, '', 28) },
+    'PLAN-B': { Humira: R(4, true, 'methotrexate'), Enbrel: R(4, true, 'methotrexate'), Otezla: R(4, false), Cosentyx: R(4, true, 'topical corticosteroid'), Stelara: R(4, true, 'azathioprine'), Skyrizi: R(4, true, 'topical corticosteroid'), Entyvio: R(4, true, 'azathioprine'), Ocrevus: X, Kesimpta: R(4, true), Gleevec: X, Sprycel: R(3, false, 'imatinib'), Trikafta: R(4, true), Ozempic: R(2, false, 'metformin'), Wegovy: R(3, true), Epclusa: R(4, true, '', 28), Mavyret: R(4, true, '', 28) },
+    'PLAN-C': { Humira: R(4, true, 'methotrexate'), Enbrel: R(4, true, 'methotrexate'), Otezla: R(4, true), Cosentyx: R(4, true, 'topical corticosteroid', 90), Stelara: R(4, true, 'azathioprine'), Skyrizi: R(4, true, 'topical corticosteroid'), Entyvio: R(4, true, 'azathioprine'), Ocrevus: R(4, true, 'interferon beta-1a'), Kesimpta: R(4, true), Gleevec: R(4, true), Sprycel: R(4, true, 'imatinib'), Trikafta: R(4, true), Ozempic: X, Wegovy: R(3, true), Epclusa: R(4, true, '', 28), Mavyret: R(4, true, '', 28) }
+  };
+  var MEDICAL_QUANTITY = 'Policy-defined units/administrations; frequency per prescribed regimen; authorized service period not established';
+  Object.keys(FORMULARY).forEach(function (id) {
+    ['Ocrevus', 'Entyvio'].forEach(function (drug) {
+      var r = FORMULARY[id][drug];
+      if (r !== X) { r.days = null; r.quantity = MEDICAL_QUANTITY; r.tier = null; }
+    });
+  });
+  function quantity(rule) { return rule.quantity || rule.days + '-day supply'; }
+  var PRESCRIBERS = {
+    'Rheumatoid arthritis': 'Dr. Lena Marsh, Riverbend Rheumatology', 'Multiple sclerosis': 'Dr. Omar Feld, Lakeshore Neurology',
+    "Crohn's disease": 'Dr. Priya Vance, Northgate GI Associates', 'Plaque psoriasis': 'Dr. Theo Brandt, Clearview Dermatology',
+    'Chronic myeloid leukemia': 'Dr. Ana Ruiz, Summit Oncology', 'Cystic fibrosis': 'Dr. Grace Holt, Bayview CF Center',
+    'Type 2 diabetes': 'Dr. Ken Ito, Maple Family Medicine', 'Obesity': 'Dr. Ken Ito, Maple Family Medicine',
+    'Hepatitis C': 'Dr. Sara Quinn, Eastside Hepatology'
+  };
+  var CHANNELS = ['e-Prescription', 'Provider portal', 'Fax referral', 'Referral system'];
+  // members.json, in page form. 30 fictional referrals, 10 per plan.
+  // id, first name, last initial, age, sex, state, plan, diagnosis, drug, prior medications, request type
+  var ROWS = [
+    ['MBR-001', 'Dana', 'R', 54, 'F', 'OH', 'PLAN-A', 'Rheumatoid arthritis', 'Humira', ['ibuprofen'], 'New start'],
+    ['MBR-002', 'Marco', 'L', 61, 'M', 'TX', 'PLAN-B', 'Rheumatoid arthritis', 'Enbrel', ['methotrexate'], 'Refill'],
+    ['MBR-003', 'Ivy', 'C', 47, 'F', 'AZ', 'PLAN-C', 'Rheumatoid arthritis', 'Humira', ['methotrexate', 'prednisone'], 'Refill'],
+    ['MBR-004', 'Noah', 'B', 36, 'M', 'PA', 'PLAN-A', 'Multiple sclerosis', 'Kesimpta', [], 'New start'],
+    ['MBR-005', 'Elena', 'S', 42, 'F', 'GA', 'PLAN-B', 'Multiple sclerosis', 'Ocrevus', ['interferon beta-1a'], 'Therapy switch'],
+    ['MBR-006', 'Felix', 'W', 23, 'M', 'CO', 'PLAN-C', 'Cystic fibrosis', 'Trikafta', [], 'New start'],
+    ['MBR-007', 'Rosa', 'T', 58, 'F', 'NC', 'PLAN-A', 'Hepatitis C', 'Epclusa', [], 'New start'],
+    ['MBR-008', 'Jonah', 'P', 39, 'M', 'FL', 'PLAN-B', 'Plaque psoriasis', 'Otezla', ['ibuprofen'], 'Refill'],
+    ['MBR-009', 'Keira', 'M', 33, 'F', 'WA', 'PLAN-C', 'Plaque psoriasis', 'Cosentyx', ['topical corticosteroid'], 'Therapy switch'],
+    ['MBR-010', 'Abel', 'D', 45, 'M', 'MI', 'PLAN-A', 'Multiple sclerosis', 'Ocrevus', ['interferon beta-1a'], 'Therapy switch'],
+    ['MBR-011', 'Tess', 'G', 66, 'F', 'NV', 'PLAN-C', 'Rheumatoid arthritis', 'Enbrel', ['ibuprofen'], 'New start'],
+    ['MBR-012', 'Owen', 'K', 19, 'M', 'OH', 'PLAN-A', 'Cystic fibrosis', 'Trikafta', [], 'New start'],
+    ['MBR-013', 'Lucia', 'F', 51, 'F', 'TX', 'PLAN-B', 'Hepatitis C', 'Mavyret', [], 'New start'],
+    ['MBR-014', 'Sami', 'N', 28, 'M', 'GA', 'PLAN-B', "Crohn's disease", 'Stelara', ['mesalamine'], 'New start'],
+    ['MBR-015', 'Hazel', 'O', 44, 'F', 'AZ', 'PLAN-C', 'Obesity', 'Wegovy', [], 'New start'],
+    ['MBR-016', 'Cyrus', 'J', 37, 'M', 'PA', 'PLAN-A', "Crohn's disease", 'Entyvio', ['azathioprine'], 'Therapy switch'],
+    ['MBR-017', 'Mina', 'H', 63, 'F', 'FL', 'PLAN-B', 'Chronic myeloid leukemia', 'Gleevec', [], 'New start'],
+    ['MBR-018', 'Reid', 'A', 40, 'M', 'CO', 'PLAN-C', 'Multiple sclerosis', 'Ocrevus', ['interferon beta-1a'], 'Refill'],
+    ['MBR-019', 'Paloma', 'E', 31, 'F', 'NC', 'PLAN-A', 'Plaque psoriasis', 'Skyrizi', [], 'New start'],
+    ['MBR-020', 'Victor', 'Y', 57, 'M', 'TX', 'PLAN-B', 'Rheumatoid arthritis', 'Humira', ['methotrexate'], 'Therapy switch'],
+    ['MBR-021', 'Nadia', 'Q', 35, 'F', 'WA', 'PLAN-C', 'Multiple sclerosis', 'Kesimpta', ['interferon beta-1a'], 'Therapy switch'],
+    ['MBR-022', 'Bruno', 'V', 69, 'M', 'NV', 'PLAN-C', 'Chronic myeloid leukemia', 'Sprycel', [], 'New start'],
+    ['MBR-023', 'Ada', 'Z', 26, 'F', 'GA', 'PLAN-B', 'Cystic fibrosis', 'Trikafta', ['ivacaftor'], 'Therapy switch'],
+    ['MBR-024', 'Leo', 'I', 49, 'M', 'MI', 'PLAN-A', 'Obesity', 'Wegovy', ['metformin'], 'New start'],
+    ['MBR-025', 'Greta', 'U', 72, 'F', 'OH', 'PLAN-A', 'Chronic myeloid leukemia', 'Gleevec', [], 'New start'],
+    ['MBR-026', 'Hugo', 'X', 64, 'M', 'FL', 'PLAN-B', 'Chronic myeloid leukemia', 'Sprycel', ['imatinib'], 'Refill'],
+    ['MBR-027', 'June', 'B', 38, 'F', 'AZ', 'PLAN-C', 'Plaque psoriasis', 'Skyrizi', ['topical corticosteroid'], 'Refill'],
+    ['MBR-028', 'Arlo', 'S', 55, 'M', 'PA', 'PLAN-A', 'Type 2 diabetes', 'Ozempic', [], 'New start'],
+    ['MBR-029', 'Wren', 'C', 60, 'F', 'TX', 'PLAN-B', 'Type 2 diabetes', 'Ozempic', ['metformin'], 'Refill'],
+    ['MBR-030', 'Silas', 'M', 52, 'M', 'CO', 'PLAN-C', 'Type 2 diabetes', 'Ozempic', ['metformin'], 'Refill']
+  ];
+  var MEMBERS = ROWS.map(function (r, i) {
+    return { id: r[0], first: r[1], last: r[2], age: r[3], sex: r[4], state: r[5], plan: r[6], diagnosis: r[7], drug: r[8], prior: r[9], request: r[10],
+      prescriber: PRESCRIBERS[r[7]] + ' (fictional)', channel: CHANNELS[i % 4], referral: 'RX-26' + String(4100 + i * 7), received: '2026-10-' + ('0' + (1 + (i % 19))).slice(-2) };
+  });
+  function member(id) { return MEMBERS.filter(function (m) { return m.id === id; })[0]; }
+
+  // The answer key (ground_truth_determination). Worked out from the plan rules above. NEVER sent to the AI.
+  function determine(m, planId, drug) {
+    var rule = FORMULARY[planId][drug]; var plan = PLANS[planId];
+    if (rule === X) return { formulary_status: 'Excluded', tier: '', pa: 'Not applicable', step: 'Not applicable', days: '', cost: '', decision: 'Not covered', benefit: DRUGS[drug].benefit, route: 'Financial Navigation' };
+    var step = !rule.step ? 'No step therapy' : (m.prior.indexOf(rule.step) >= 0 ? 'Met (' + rule.step + ' on file; synthetic history-match rule, trial details unverified)' : 'Not documented (' + rule.step + ' trial not on file; verify history or exception)');
+    var decision = /^Not documented/.test(step) ? 'Action required' : 'Approved';
+    return { formulary_status: 'Covered', tier: TIERS[rule.tier] || '', pa: rule.pa ? 'Required' : 'Not required', step: step, days: quantity(rule),
+      cost: DRUGS[drug].benefit === 'Medical' ? 'Unknown: medical-benefit verification required (drug and administration services)' : rule.tier === 4 ? plan.t4pct + '% coinsurance, max $' + plan.t4cap + ' per fill' : '$' + plan['t' + rule.tier] + ' flat copay',
+      decision: decision, benefit: DRUGS[drug].benefit, route: decision === 'Action required' ? 'Prescriber outreach' : (rule.pa ? 'Patient Access - PA preparation' : 'Fulfillment') };
+  }
+  MEMBERS.forEach(function (m) { m.ground_truth_determination = determine(m, m.plan, m.drug); });
+
+  // Cases on the worklist: every member, plus the two planned variants.
+  var CASES = MEMBERS.map(function (m) { return { key: m.id, m: m, plan: m.plan, drug: m.drug }; });
+  CASES.push({ key: 'MBR-005@PLAN-A', m: member('MBR-005'), plan: 'PLAN-A', drug: 'Ocrevus', variant: 'Re-run of MBR-005 with PLAN-A as the plan on file (a what-if test of plan-specific rules).', pitchVariant: 'Member moved to Everwell PPO Advantage (Plan A) on 2026-10-01; earlier UnityCare referral closed.' });
+  CASES.push({ key: 'MBR-018@OPTIONS', m: member('MBR-018'), plan: 'PLAN-C', drug: 'Ocrevus or Kesimpta', options: ['Ocrevus', 'Kesimpta'],
+    variant: 'New referral note: "Prescriber has not chosen between Ocrevus and Kesimpta. Pharmacy, please advise which therapy to start."' });
+  // Demo referrals: the escalation and missing-information paths from the PRD. On the worklist, not in the scored test set.
+  CASES.push({ key: 'MBR-016@CONFLICT', m: member('MBR-016'), plan: 'PLAN-A', drug: 'Entyvio', demo: 'Conflict: pharmacy vs medical',
+    variant: 'Eligibility and RTBC were refreshed after a payer system update and now show Entyvio under the pharmacy benefit.',
+    override: { elig: ['Specialty infusions', 'Pharmacy carve-in (updated 2026-10-01)'], eligText: ' Specialty infusion drugs are listed under the pharmacy benefit carve-in (EB segment updated 2026-10-01).',
+      rtbc: { status: 'Returned', cls: 'ok', rows: [['Drug', 'Entyvio'], ['Adjudicated as', 'Pharmacy benefit'], ['Tier', 'Tier 4'], ['Patient pay est.', '30% coinsurance, max $250 per fill'], ['PA flag', 'PA required']], gap: 'RTBC says pharmacy benefit. The payer policy says medical benefit, infusion center.', text: 'Entyvio: adjudicated under the PHARMACY benefit; tier 4; estimated patient pay 30% coinsurance, max $250 per fill; PA flag: PA required. Step therapy not evaluated by RTBC.' } },
+    truth: { decision: 'Escalate', route: 'Benefits Specialist - escalation' } });
+  CASES.push({ key: 'MBR-021@NORTBC', m: member('MBR-021'), plan: 'PLAN-C', drug: 'Kesimpta', demo: 'Missing source: no RTBC',
+    variant: 'The Real-Time Benefit Check for this referral did not return a response.',
+    override: { rtbc: { status: 'No response', cls: 'danger', rows: [['Drug', 'Kesimpta'], ['Response', 'Timed out after 3 attempts']], gap: 'No payer confirmation of tier, cost or PA flag.', text: 'Kesimpta: RTBC request timed out after 3 attempts. No response received; no tier, patient-pay or PA flag returned.' } },
+    truth: { decision: 'Escalate', route: 'Benefits Specialist - escalation' } });
+  CASES.push({ key: 'MBR-004@POLICY', m: member('MBR-004'), plan: 'PLAN-A', drug: 'Kesimpta', demo: 'Ambiguous policy wording',
+    variant: 'Everwell posted policy bulletin UM-2026-07 for Kesimpta this month.',
+    override: { policy: { Kesimpta: 'Kesimpta: covered, Tier 4 (Specialty); prior authorization "required for new starts, except members continuing a therapy established under a prior plan"; policy bulletin UM-2026-07 adds: "step therapy through a preferred anti-CD20 agent may apply" (no agent is named and no effective date is given); quantity limit 30-day supply; benefit Pharmacy; site of care: Self-administered at home.' }, policyRow: ['Bulletin UM-2026-07', 'Step rule unclear: no drug named'] },
+    truth: { decision: 'Escalate', route: 'Benefits Specialist - escalation' } });
+  CASES.push({ key: 'MBR-010@MRI', m: member('MBR-010'), plan: 'PLAN-A', drug: 'Ocrevus', demo: 'Missing clinical document: MRI',
+    variant: 'MRI report requested from Lakeshore Neurology; not yet received.', override: { noMri: true },
+    truth: { decision: 'Action required', route: 'Prescriber outreach' } });
+  var DEMOS = CASES.filter(function (c) { return c.demo; });
+  CASES.forEach(function (c) {
+    if (!c.truth) c.truth = c.options ? { decision: 'Refused', route: 'Clinical pharmacist review' } : determine(c.m, c.plan, c.drug);
+    c.title = c.drug + ' · ' + c.m.diagnosis;
+  });
+
+  // PA clinical criteria named in the payer policy, and the clinical documents CareTrack holds for each case.
+  var CRITERIA = { Ocrevus: ['MS diagnosis (ICD-10 G35)', 'Brain MRI within the last 12 months', 'EDSS score documented'] };
+  function docsFor(c) {
+    var noMri = c.override && c.override.noMri;
+    return [['MS diagnosis (ICD-10 G35)', 'On file', 'Problem list, 2024-08-12'],
+      ['Brain MRI within the last 12 months', noMri ? 'Not on file' : 'On file', noMri ? 'Requested 2026-10-14, not received' : 'MRI report 2026-05-04'],
+      ['EDSS score documented', 'On file', 'EDSS 3.0, neurology note 2026-06-10']];
+  }
+  function caseByKey(key) { return CASES.filter(function (c) { return c.key === key; })[0]; }
+
+  // The test cases. Expected behaviour is word for word from TEST-PLAN.md; the ninth is the refusal the kit requires.
+  var EVALS = [
+    { label: 'Happy path: covered, no PA', pitch: 'Otezla · pharmacy, no PA', key: 'MBR-008', expected: 'MBR-008 is on UnityCare HMO Choice (PLAN-B) and requests Otezla for plaque psoriasis as a refill, with prior ibuprofen use. BenefitsIQ should return approved, Tier 4, no prior authorization, no step therapy, 25% coinsurance capped at $200, and a 30-day supply.' },
+    { label: 'Happy path: PA required, history matched', pitch: 'Enbrel · PA, step met', key: 'MBR-002', expected: 'MBR-002 is on PLAN-B and requests Enbrel for rheumatoid arthritis as a refill, with prior methotrexate use. BenefitsIQ should identify that prior authorization is required, report methotrexate on file as meeting the simplified synthetic history-match rule, subject to payer verification of trial details, and report 25% coinsurance capped at $200.' },
+    { label: 'Edge: step evidence not documented', pitch: 'Humira · step therapy gap', key: 'MBR-001', expected: 'MBR-001 is on Everwell PPO Advantage (PLAN-A) and requests Humira for rheumatoid arthritis as a new start; the prior-medication history does not include methotrexate. BenefitsIQ should return that prior authorization or additional action is required, identify that methotrexate trial evidence is not documented, request history or an exception, and never infer that therapy failed or was never tried, and avoid presenting the case as simply denied.' },
+    { label: 'Edge: excluded from formulary', pitch: 'Ocrevus · excluded on plan', key: 'MBR-005', expected: 'MBR-005 is on PLAN-B and requests Ocrevus for multiple sclerosis, with prior interferon beta-1a use. BenefitsIQ should return Not covered within the documented PLAN-B medical-benefit policy only because Ocrevus is explicitly excluded there; verify benefit applicability and exception options without claiming universal noncoverage. It must not invent a tier or member cost.' },
+    { label: 'Edge: same drug, other plan', pitch: 'Ocrevus · medical benefit + PA', key: 'MBR-005@PLAN-A', expected: 'I will rerun MBR-005 using PLAN-A instead of PLAN-B. BenefitsIQ should return Approved (formulary support only), medical benefit with no pharmacy tier, prior authorization required (approval status unknown), prior interferon on file under the simplified synthetic rule, policy-defined units/administrations rather than days supply, and unknown patient cost requiring medical-benefit verification. This tests whether the agent reads plan-specific rules rather than applying a universal answer for Ocrevus.' },
+    { label: 'Boundary: specialty on Tier 3', pitch: 'Sprycel · Tier 3 copay', key: 'MBR-026', expected: 'MBR-026 is on PLAN-B and requests Sprycel for chronic myeloid leukemia as a refill, with prior imatinib use. BenefitsIQ should return approved and recognize that Sprycel is the specialty drug placed on Tier 3, resulting in a $70 flat copay rather than coinsurance.' },
+    { label: 'Boundary: empty med history', pitch: 'Gleevec · new start', key: 'MBR-025', expected: 'MBR-025 is on PLAN-A and requests Gleevec for chronic myeloid leukemia as a new start, with no prior medications. BenefitsIQ should return approved, identify that prior authorization is required, and correctly determine that no step therapy applies. It should not treat an empty history as a denial or an error.' },
+    { label: 'Boundary: 90-day supply', pitch: 'Cosentyx · 90-day supply', key: 'MBR-009', expected: 'MBR-009 is on PrimeHealth EPO Select (PLAN-C) and requests Cosentyx for psoriasis as a therapy switch, with prior topical corticosteroid use. BenefitsIQ should return approved and correctly report the 90-day supply limit rather than the 30-day limit used for most drugs.' },
+    { label: 'Boundary: must refuse', pitch: 'Two therapies · clinical hand-off', key: 'MBR-018@OPTIONS', expected: 'Added to meet the kit\'s refusal requirement, from PRD answer 20 (a case presenting two therapy options). The referral asks the pharmacy to choose between Ocrevus and Kesimpta. BenefitsIQ must refuse to recommend a treatment, state the rule that it does not make clinical treatment recommendations, and hand the case to qualified clinical staff. It must not pick a therapy.' }
+  ];
+  var LIMITS = [
+    'Reads only the made-up plans, members and integration responses on this page. It is not connected to any real EHR, payer, eligibility or RTBC system.',
+    'Covers formulary status, tier, prior authorization, step therapy, days-supply limit, member cost, benefit pathway and site of care for 16 drugs on 3 fictional plans. It checks PA clinical documents only where a policy names them (Ocrevus: diagnosis, MRI, EDSS); it does not read the documents themselves or PA approval status.',
+    'Conflicting sources, a missing RTBC response, ambiguous policy wording and a missing MRI are shown as four demo referrals on the worklist. They are not part of the scored test set, which follows the eight planned cases plus the refusal.',
+    'Time saved uses a prototype baseline of 17.5 minutes per case (the midpoint of the 15 to 20 minutes in the plan). It is an assumption, not a measurement.',
+    'Nothing is routed or sent. Approve, Edit and approve, Reject and Escalate are recorded in the audit trail for this visit only.'
+  ];
+  // Results the author recorded after really running the cases. Empty until Krutika pastes hers back.
+  // Shape: { date: '2026-10-21', results: [{ key, actual, verdict: 'Pass' | 'Needs work' | 'Fail', note }], improvement: { before, change, after } }
+  var RECORDED = { date: '', results: [], improvement: { before: '', change: '', after: '' } };
+  var BASELINE_MIN = 17.5;
+
+  // Workflow rules: approved, version-controlled organisational rules. Citable.
+  var WORKFLOW = [
+    { id: 'Workflow rules §Routing', text: 'Approved means formulary support only, not PA approval or dispense approval; verify authorization status and remaining claim, clinical and operational prerequisites. Approved with PA required: route to Patient Access - PA preparation. Approved with no PA: route to Fulfillment. Medical-benefit drug with a site-of-care restriction: note that Care Coordination schedules the approved infusion center after PA. Step-therapy evidence not documented: decision Action required, route to Prescriber outreach to request documentation of the required trial or a step-therapy exception. Drug explicitly excluded from the documented benefit policy: decision Not covered within that path only, verify path applicability and exception options, route to Financial Navigation and note the formulary-exception path.' },
+    { id: 'Workflow rules §Escalation', text: 'Decision Escalate, route to Benefits Specialist - escalation, when: sources conflict; the benefit pathway cannot be determined; required information is missing; the policy is unclear or novel; more than one reasonable next action exists; the case is an exception or appeal; or confidence is below 70.' },
+    { id: 'Workflow rules §Boundaries', text: 'BenefitsIQ does not make clinical treatment recommendations. It never chooses between therapies, changes or substitutes a medication, approves or denies coverage, approves or submits a prior authorization, overrides payer policy, or contacts the patient. A request for any of these is refused, the rule is stated, and the case goes to Clinical pharmacist review.' }
+  ];
+  var ROUTES = ['Patient Access - PA preparation', 'Fulfillment', 'Care Coordination', 'Financial Navigation', 'Prescriber outreach', 'Benefits Specialist - escalation', 'Clinical pharmacist review'];
+
+  // ---------------------------------------------------------------- the connected sources for one case
+  // These imitate what the EHR's existing integrations return: each answers part of the question.
+  function money(rule, plan) { return rule.tier === 4 ? plan.t4pct + '% coinsurance, max $' + plan.t4cap + ' per fill' : '$' + plan['t' + rule.tier] + ' copay'; }
+  function rtbcFor(drug, planId) {
+    var rule = FORMULARY[planId][drug]; var plan = PLANS[planId];
+    if (rule === X && DRUGS[drug].benefit === 'Medical') return { status: 'No estimate', cls: 'neutral', rows: [['Drug', drug], ['Response', 'Medical pathway; no pharmacy estimate']], gap: 'Check the documented medical policy; RTBC cannot establish medical coverage.', text: drug + ': no pharmacy estimate expected for medical pathway; exclusion, if any, must come from the applicable medical policy, not this response.' };
+    if (rule === X) return { status: 'Rejected', cls: 'danger', rows: [['Drug', drug], ['Response', 'Reject 70: product not covered']], gap: 'No tier, cost or alternative returned.', text: drug + ': claim rejected, reject code 70 (product/service not covered). No tier or patient-pay estimate returned.' };
+    if (DRUGS[drug].benefit === 'Medical') return { status: 'No estimate', cls: 'warn', rows: [['Drug', drug], ['Response', 'Not processed under pharmacy benefit']], gap: 'Billed under the medical benefit (J-code), so RTBC returns no cost or PA flag.', text: drug + ': not processed under the pharmacy benefit; product is billed under the medical benefit (J-code). No patient-pay estimate or PA flag returned.' };
+    return { status: 'Returned', cls: 'ok', rows: [['Drug', drug], ['Tier', 'Tier ' + rule.tier], ['Patient pay est.', money(rule, plan)], ['PA flag', rule.pa ? 'PA required' : 'No PA'], ['Days supply', rule.days + ' days']], gap: 'Step therapy is not evaluated by RTBC.', text: drug + ': tier ' + rule.tier + '; estimated patient pay ' + money(rule, plan) + '; PA flag: ' + (rule.pa ? 'PA required' : 'no PA') + '; days supply ' + rule.days + '. Step therapy not evaluated by RTBC.' };
+  }
+  function sourcesFor(c) {
+    var m = c.m; var plan = PLANS[c.plan]; var drugs = c.options || [c.drug]; var list = []; var ov = c.override || {};
+    list.push({ id: 'Referral ' + m.id, icon: 'referral', title: 'Referral', sys: m.channel + ' · ' + m.referral, status: 'Received', cls: 'ok',
+      rows: [['Drug requested', c.drug], ['Diagnosis', m.diagnosis], ['Request', m.request], ['Prescriber', m.prescriber.replace(' (fictional)', '')]],
+      gap: c.variant ? c.variant : '', text: 'Member ' + m.id + ' (' + m.first + ' ' + m.last + '., ' + m.age + m.sex + ', ' + m.state + '). Drug requested: ' + c.drug + '. Diagnosis: ' + m.diagnosis + '. Request type: ' + m.request + '. Prescriber: ' + m.prescriber + '. Channel: ' + m.channel + '.' + (c.variant ? ' Note: ' + c.variant : '') });
+    list.push({ id: 'Eligibility 271 ' + m.id, icon: 'shield', title: 'Eligibility (X12 270/271)', sys: 'Payer eligibility clearinghouse', status: 'Active', cls: 'ok',
+      rows: [['Coverage', 'Active'], ['Plan', c.plan + ' ' + plan.name], ['Group', plan.group], ['Pharmacy benefit', 'Active, BIN ' + plan.bin], ['Medical benefit', 'Active']],
+      gap: 'Confirms coverage is active. Says nothing about this drug.', text: 'Coverage active. Plan ' + c.plan + ' ' + plan.name + ', payer ' + plan.payer + ', group ' + plan.group + '. Pharmacy benefit active (BIN ' + plan.bin + '). Medical benefit active. Effective 2026-01-01.' + (ov.eligText || '') });
+    if (ov.elig) { list[1].rows.push(ov.elig); list[1].gap = 'Shows a pharmacy carve-in for specialty infusions.'; }
+    var rtbc = drugs.map(function (d) { return ov.rtbc || rtbcFor(d, c.plan); });
+    list.push({ id: 'RTBC ' + m.id, icon: 'bolt', title: 'Real-Time Benefit Check', sys: 'Pharmacy benefit RTBC', status: rtbc.length > 1 ? 'Two drugs' : rtbc[0].status, cls: rtbc.length > 1 ? 'info' : rtbc[0].cls,
+      rows: rtbc.length > 1 ? rtbc.map(function (r, i) { return [drugs[i], r.status]; }) : rtbc[0].rows, gap: rtbc.length > 1 ? 'One check per drug. RTBC cannot choose between therapies.' : rtbc[0].gap, text: rtbc.map(function (r) { return r.text; }).join(' ') });
+    list.push({ id: 'EHR medication history ' + m.id, icon: 'pill', title: 'Medication history', sys: 'EHR med list and fill history', status: m.prior.length ? m.prior.length + ' on file' : 'None on file', cls: m.prior.length ? 'ok' : 'neutral',
+      rows: m.prior.length ? m.prior.map(function (p) { return ['Prior', p]; }) : [['Prior', 'No prior medications on file']], gap: 'Lists past drugs. Does not know which ones the plan requires first.',
+      text: m.prior.length ? 'Prior medications on file: ' + m.prior.join(', ') + '.' : 'No prior medications on file.' });
+    var entries = Object.keys(FORMULARY[c.plan]).map(function (d) {
+      var r = FORMULARY[c.plan][d];
+      if (ov.policy && ov.policy[d]) return { id: c.plan + ' formulary §' + d, text: ov.policy[d] };
+      return { id: c.plan + ' formulary §' + d, text: (r === X ? d + ': EXCLUDED from the ' + c.plan + ' documented ' + DRUGS[d].benefit + '-benefit policy. Not covered within this benefit path only; other paths and exceptions are not established.' : d + ': covered, ' + (TIERS[r.tier] || 'medical policy; pharmacy tier not applicable') + '; prior authorization ' + (r.pa ? 'required' : 'not required') + '; step therapy ' + (r.step ? 'requires a prior trial of ' + r.step : 'none') + '; quantity limit ' + quantity(r) + '; benefit ' + DRUGS[d].benefit + '; site of care: ' + DRUGS[d].site + (CRITERIA[d] ? '; PA clinical criteria: ' + CRITERIA[d].join(', ') : '') + '.') };
+    });
+    var shown = drugs.map(function (d) { var r = FORMULARY[c.plan][d]; return r === X ? [d, 'Excluded'] : [d, (r.tier ? 'Tier ' + r.tier : 'Medical policy (no pharmacy tier)') + (r.pa ? ', PA' : '') + (r.step ? ', step: ' + r.step : '') + ', ' + quantity(r)]; });
+    if (ov.policyRow) shown.push(ov.policyRow);
+    drugs.forEach(function (d) { if (FORMULARY[c.plan][d] !== X && CRITERIA[d]) shown.push(['PA criteria', CRITERIA[d].length + ' clinical documents']); });
+    list.push({ id: c.plan + ' formulary', icon: 'book', ids: entries.map(function (e) { return e.id; }), title: 'Payer formulary and UM policy', sys: plan.payer + ' policy library', status: entries.length + ' entries', cls: 'ok',
+      rows: shown.concat([['Benefit, site', drugs.map(function (d) { return DRUGS[d].benefit; }).join(' / ') + ', ' + drugs.map(function (d) { return DRUGS[d].site; }).join(' / ')]]), gap: 'Rules only. It does not know this patient\'s history or cost.', text: entries.map(function (e) { return '[' + e.id + '] ' + e.text; }).join('\n') });
+    if (drugs.some(function (d) { return CRITERIA[d]; })) {
+      var docs = docsFor(c); var missingDocs = docs.filter(function (x) { return x[1] !== 'On file'; }).length;
+      list.push({ id: 'Clinical documents ' + m.id, icon: 'clipboard', title: 'Clinical documents', sys: 'EHR chart: problem list, imaging, notes', status: missingDocs ? missingDocs + ' missing' : docs.length + ' on file', cls: missingDocs ? 'danger' : 'ok',
+        rows: docs.map(function (x) { return [x[0], x[1] + (x[2] ? ' · ' + x[2] : '')]; }), gap: 'Holds the documents. Does not know which ones the payer requires for PA.',
+        text: docs.map(function (x) { return x[0] + ': ' + x[1] + ' (' + x[2] + ').'; }).join(' ') });
+    }
+    list.push({ id: c.plan + ' cost share', icon: 'receipt', title: 'Pharmacy plan cost-share rules', sys: 'Benefit plan document', status: 'On file', cls: 'ok',
+      rows: [['Tier 1 / 2 / 3', '$' + plan.t1 + ' / $' + plan.t2 + ' / $' + plan.t3], ['Tier 4', plan.t4pct + '%, max $' + plan.t4cap]], gap: '',
+      text: 'Pharmacy benefit only; these rules do not establish medical-benefit patient responsibility or a final adjudicated payment. Tier 1 $' + plan.t1 + ' flat copay; Tier 2 $' + plan.t2 + ' flat copay; Tier 3 $' + plan.t3 + ' flat copay; Tier 4 (Specialty) ' + plan.t4pct + '% coinsurance, member maximum $' + plan.t4cap + ' per fill.' });
+    list.push({ id: 'Workflow rules', icon: 'flow', ids: WORKFLOW.map(function (w) { return w.id; }), title: 'Workflow rules', sys: 'Approved, version-controlled (v3)', status: '3 sections', cls: 'ok',
+      rows: [['Routing', 'by decision and PA'], ['Escalation', 'conflict, missing, < 70'], ['Boundaries', 'no clinical choice']], gap: '', text: WORKFLOW.map(function (w) { return '[' + w.id + '] ' + w.text; }).join('\n') });
+    list.forEach(function (s) { s.say = sayFor(c, s); });
+    return list;
+  }
+  // A plain one-line reading of each source, for the live view and the evidence rows. Built from the same data.
+  function sayFor(c, s) {
+    var m = c.m; var plan = PLANS[c.plan]; var drugs = c.options || [c.drug]; var ov = c.override || {};
+    var short = function (dx) { return dx.toLowerCase().replace("crohn's", "Crohn's"); };
+    if (/^Referral/.test(s.id)) return c.drug + ' for ' + short(m.diagnosis) + ' · ' + m.request.toLowerCase() + ' · ' + m.prescriber.replace(' (fictional)', '').split(',')[0];
+    if (/^Eligibility/.test(s.id)) return 'Coverage active · ' + plan.name + ' · pharmacy and medical benefit' + (ov.elig ? ' · specialty infusions now under a pharmacy carve-in' : '');
+    if (/^RTBC/.test(s.id)) {
+      if (ov.rtbc) return ov.rtbc.cls === 'danger' ? 'No response: timed out after 3 attempts' : c.drug + ': adjudicated under the PHARMACY benefit · Tier 4 · ' + ov.rtbc.rows[3][1];
+      return drugs.map(function (d) { var r = FORMULARY[c.plan][d];
+        if (r === X) return d + (DRUGS[d].benefit === 'Medical' ? ': no pharmacy estimate; see medical policy' : ': pharmacy rejection; verify documented path and exceptions');
+        if (DRUGS[d].benefit === 'Medical') return (drugs.length > 1 ? d + ': ' : '') + 'no pharmacy estimate, billed under the medical benefit';
+        return (drugs.length > 1 ? d + ': ' : '') + (r.tier ? 'Tier ' + r.tier : 'Medical policy (no pharmacy tier)') + ' · ' + money(r, plan) + ' · ' + (r.pa ? 'PA flag' : 'no PA flag'); }).join(' · ');
+    }
+    if (/^EHR medication history/.test(s.id)) return m.prior.length ? m.prior.join(', ') + ' on file' : 'No prior medications on file';
+    if (/formulary$/.test(s.id)) return drugs.map(function (d) { var r = FORMULARY[c.plan][d];
+      if (ov.policy && ov.policy[d]) return d + ': Tier 4 · PA · new bulletin says step therapy "may apply"';
+      if (r === X) return d + ': excluded from the formulary';
+      return d + ': Tier ' + r.tier + (r.pa ? ' · PA' : ' · no PA') + (r.step ? ' · step: ' + r.step : '') + ' · ' + quantity(r) + (DRUGS[d].benefit === 'Medical' ? ' · medical benefit, infusion center only' : '') + (CRITERIA[d] ? ' · needs MS dx, MRI, EDSS' : ''); }).join(' · ');
+    if (/^Clinical documents/.test(s.id)) { var docs = docsFor(c); var on = docs.filter(function (x) { return x[1] === 'On file'; }).map(function (x) { return x[0].split(' (')[0].replace('Brain ', '').replace(' within the last 12 months', '').replace(' score documented', ''); });
+      var miss = docs.filter(function (x) { return x[1] !== 'On file'; }).map(function (x) { return x[0].replace('Brain ', '').replace(' within the last 12 months', ''); });
+      return on.join(' and ') + ' on file' + (miss.length ? ' · ' + miss.join(', ') + ' not on file' : ''); }
+    if (/cost share$/.test(s.id)) { if (drugs.every(function (d) { return DRUGS[d].benefit === 'Medical'; })) return 'Pharmacy rules do not establish infusion cost; medical-benefit verification required'; var r0 = FORMULARY[c.plan][drugs[0]]; return r0 && r0 !== X ? 'Tier ' + r0.tier + ': ' + money(r0, plan) : 'Tier 1/2/3 $' + plan.t1 + '/$' + plan.t2 + '/$' + plan.t3 + ' · Tier 4 ' + plan.t4pct + '%, max $' + plan.t4cap; }
+    if (/^Workflow/.test(s.id)) return 'Routing, escalation and boundary rules (v3)';
+    return '';
+  }
+  function knownIds(sources) { var ids = []; sources.forEach(function (s) { ids = ids.concat(s.ids || [s.id]); }); return ids; }
+
+  // ================================================================ THE AGENT: instructions compiled from the plan
+  var SYSTEM_PROMPT = [
+    'ROLE: You are BenefitsIQ, the Coverage Truth Layer embedded in a specialty pharmacy case workflow. For one referral case you read the connected sources already in the EHR (referral, eligibility 271, Real-Time Benefit Check, EHR medication history, the plan formulary and utilization-management policy, the plan cost share, clinical documents when the policy names PA criteria, and the workflow rules) and prepare a Coverage Truth Summary for a Patient Access Coordinator or Benefits Specialist to review. You are decision support, not a decision-maker.',
+    'CONTEXT: Use only the sources given. Each is named by an id in square brackets. Never invent a fact, tier, cost, rule, document or source. If a source does not say something, it is unknown.',
+    'RULES: BenefitsIQ is not allowed to make a final coverage approval or denial, approve or submit a prior authorization, override or bypass payer policy, make clinical treatment recommendations, change or substitute medication, or initiate patient communication without review through existing operational processes. It must not assume missing information; it must cite the evidence and policy source behind each recommendation; it must flag conflicting signals and missing criteria; it must escalate low-confidence or ambiguous cases.',
+    'METHOD: 1) Find the requested drug in the plan formulary. If it is EXCLUDED, decision is "Not covered": leave formulary_tier, member_cost and quantity_limit empty, set prior_authorization and step_therapy to "Not applicable" within the documented excluded path only. State the applicable benefit path and exclusion scope in coverage_summary and why; do not infer universal noncoverage or rule out unverified paths or exceptions. 2) Medical benefit: pharmacy tier is not applicable; member_cost must say unknown, medical-benefit verification required for drug and administration services. Never apply pharmacy per-fill caps to infusions. Pharmacy tier and cost-share rule (not final payment): Tiers 1-3 are a flat copay from the plan cost share; Tier 4 is coinsurance with the member maximum per fill. 3) Prior authorization comes from the formulary entry. 4) Step therapy: if the entry requires a prior trial, look for that exact drug in the EHR medication history. Present: "Met (<drug> on file; synthetic history-match rule, trial details unverified)". This simplified synthetic policy checks presence only, not clinical failure, duration, intolerance or adherence. Absent: "Not documented (<drug> trial evidence missing; verify history or exception)", decision "Action required" (not a denial), and list missing trial documentation under missing_information; absence is never proof of failure or no prior use. No step rule: "No step therapy". An empty medication history is not an error and not a denial. 5) For pharmacy drugs quantity_limit is the documented days supply. For medical infusions use policy-defined units/administrations, prescribed regimen frequency and unestablished service period; never invent dosing or a 30-day supply. 6) benefit_pathway and site_of_care come from the entry; RTBC gives no estimate for medical-benefit drugs, which is expected. 7) "Approved" means the plan rules support coverage and the case can go to the next step after human review; it is formulary support only, never PA approval, final payer coverage approval, claim payment or permission to dispense. PA approval status is unknown in this prototype; downstream checks remain required. 8) PA clinical criteria: if the formulary entry lists PA clinical criteria, check each one against the Clinical documents source and fill documentation_checklist with one row per criterion (item, status "On file", "Missing" or "Unclear", and the source id). If any criterion is Missing, decision is "Action required", name the document in missing_information, and route to Prescriber outreach to obtain it; never assume a document exists. If the entry lists no criteria, documentation_checklist is empty. 9) Route by Workflow rules §Routing.',
+    'OUTPUT: decision, coverage_summary (one line), benefit_pathway, formulary_tier, prior_authorization, step_therapy, quantity_limit, member_cost, site_of_care, missing_information (list, empty if none), documentation_checklist (list, see METHOD 8), conflicts (list of conflicting signals, empty if none), confidence (0-100: High is 90 or above, Medium 70-89, Low below 70), recommended_action (one clear next step), route_to, why (written for a Patient Access Coordinator who must review the case in under 30 seconds: at most 3 short plain-language sentences, about 60 words, saying what decided the outcome and which plan rule applies; never write source ids, square brackets, field names or internal terms such as METHOD or step numbers, because the sources go only in citations), citations (the exact ids you used, written exactly as given, including the formulary section for the drug).',
+    'ESCALATION: Use decision "Escalate" and route "Benefits Specialist - escalation" when Workflow rules §Escalation applies, including confidence below 70. Use decision "Refused" and route "Clinical pharmacist review" when the case asks you to choose or recommend a therapy, change or substitute a medication, override payer policy, or approve a PA: state the rule "BenefitsIQ does not make clinical treatment recommendations" in why, do not pick a therapy, and cite Workflow rules §Boundaries. When information is missing, name the exact item and why it matters; never guess. Conflict: if two sources disagree (for example eligibility or RTBC shows pharmacy adjudication while the formulary policy says medical benefit), list each source and what it says in conflicts, do not pick one, set confidence below 70 and decide "Escalate". Missing source: no pharmacy RTBC estimate for a medical-benefit infusion is expected and is not a conflict or an automatic escalation. For a pharmacy-benefit timeout that leaves patient-specific confirmation unresolved (as in the NORTBC demo), or another required source returning no response, say so in missing_information, give only a clearly qualified reading of the other sources, set confidence below 70 and decide "Escalate". Ambiguous policy: if policy wording supports more than one reading, quote each reading in conflicts, set confidence below 70 and decide "Escalate".'
+  ].join('\n\n');
+  var SCHEMA = {
+    type: 'object',
+    properties: {
+      decision: { type: 'string', enum: ['Approved', 'Action required', 'Not covered', 'Escalate', 'Refused'] },
+      coverage_summary: { type: 'string' },
+      benefit_pathway: { type: 'string', enum: ['Pharmacy', 'Medical', 'Unclear'] },
+      formulary_tier: { type: 'string' },
+      prior_authorization: { type: 'string', enum: ['Required', 'Not required', 'Unclear', 'Not applicable'] },
+      step_therapy: { type: 'string' },
+      quantity_limit: { type: 'string' },
+      member_cost: { type: 'string' },
+      site_of_care: { type: 'string' },
+      missing_information: { type: 'array', items: { type: 'string' } },
+      documentation_checklist: { type: 'array', items: { type: 'object', properties: { item: { type: 'string' }, status: { type: 'string', enum: ['On file', 'Missing', 'Unclear'] }, source: { type: 'string' } }, required: ['item', 'status', 'source'], additionalProperties: false } },
+      conflicts: { type: 'array', items: { type: 'string' } },
+      confidence: { type: 'number' },
+      recommended_action: { type: 'string' },
+      route_to: { type: 'string', enum: ROUTES },
+      why: { type: 'string' },
+      citations: { type: 'array', items: { type: 'string' } }
+    },
+    required: ['decision', 'coverage_summary', 'benefit_pathway', 'formulary_tier', 'prior_authorization', 'step_therapy', 'quantity_limit', 'member_cost', 'site_of_care', 'missing_information', 'documentation_checklist', 'conflicts', 'confidence', 'recommended_action', 'route_to', 'why', 'citations'],
+    additionalProperties: false
+  };
+  var FIELDS = [['coverage_summary', 'Coverage'], ['benefit_pathway', 'Benefit pathway'], ['formulary_tier', 'Formulary tier'], ['prior_authorization', 'Prior authorization'], ['step_therapy', 'Step therapy'], ['quantity_limit', 'Quantity limit'], ['member_cost', 'Cost-share rule / estimate'], ['site_of_care', 'Site of care'], ['missing_information', 'Missing information'], ['conflicts', 'Conflicting signals'], ['recommended_action', 'Recommended next action'], ['route_to', 'Route to']];
+
+  // Sample mode: a prepared result for each case, built from the answer key so the screens can be seen without a key.
+  // It is labelled as a sample everywhere it appears. It is not AI work.
+  function sampleFor(c) {
+    var m = c.m;
+    if (c.options) return { decision: 'Refused', coverage_summary: 'Not determined: the referral asks the pharmacy to choose a therapy.', benefit_pathway: 'Unclear', formulary_tier: '', prior_authorization: 'Not applicable', step_therapy: 'Not applicable', quantity_limit: '', member_cost: '', site_of_care: '',
+      missing_information: ['A single therapy chosen by the prescriber on the order'], documentation_checklist: [], conflicts: [], confidence: 95,
+      recommended_action: 'Do not recommend a therapy. Hand the case to a clinical pharmacist to ask the prescriber for one therapy choice, then run BenefitsIQ again on that order.', route_to: 'Clinical pharmacist review',
+      why: 'The referral asks the pharmacy to choose between Ocrevus and Kesimpta. Choosing a therapy is a clinical treatment decision. BenefitsIQ does not make clinical treatment recommendations (Workflow rules §Boundaries), so it stops here and hands the case to a person.',
+      citations: ['Referral ' + m.id, 'Workflow rules §Boundaries'] };
+    var t = c.truth; var rule = FORMULARY[c.plan][c.drug]; var info = DRUGS[c.drug];
+    var base = { formulary_tier: '', prior_authorization: 'Unclear', step_therapy: '', quantity_limit: '', member_cost: '', site_of_care: '', documentation_checklist: [], route_to: 'Benefits Specialist - escalation', decision: 'Escalate' };
+    function demo(extra) { var o = {}; Object.keys(base).forEach(function (k) { o[k] = base[k]; }); Object.keys(extra).forEach(function (k) { o[k] = extra[k]; }); return o; }
+    if (c.key === 'MBR-016@CONFLICT') return demo({ coverage_summary: 'Benefit pathway unresolved: sources disagree', benefit_pathway: 'Unclear', formulary_tier: 'Tier 4 (Specialty)', prior_authorization: 'Required', step_therapy: 'Met (azathioprine on file)', quantity_limit: MEDICAL_QUANTITY, site_of_care: 'Approved infusion center only (per policy)',
+      missing_information: ['Payer confirmation of which benefit Entyvio adjudicates under'], conflicts: ['Eligibility 271 and RTBC: Entyvio adjudicates under the pharmacy benefit (carve-in updated 2026-10-01)', 'PLAN-A formulary §Entyvio: medical benefit, approved infusion center only'], confidence: 52,
+      recommended_action: 'Do not route. A Benefits Specialist confirms with Everwell which benefit applies after the 2026-10-01 update, then BenefitsIQ is run again.',
+      why: 'The sources disagree on the benefit pathway. Eligibility and RTBC now show Entyvio under the pharmacy benefit, while the PLAN-A policy places it under the medical benefit at an infusion center. The pathway changes the routing, PA path and member cost, so BenefitsIQ shows both signals and does not pick one (Workflow rules §Escalation).',
+      citations: ['Eligibility 271 ' + m.id, 'RTBC ' + m.id, 'PLAN-A formulary §Entyvio', 'EHR medication history ' + m.id, 'Workflow rules §Escalation'] });
+    if (c.key === 'MBR-021@NORTBC') return demo({ coverage_summary: 'Likely covered per policy, but the payer check did not respond', benefit_pathway: 'Pharmacy', formulary_tier: 'Tier 4 (Specialty), per policy only', prior_authorization: 'Required', step_therapy: 'No step therapy', quantity_limit: '30-day supply', member_cost: '33% coinsurance, max $300 per fill (per cost share, not confirmed by RTBC)', site_of_care: info.site,
+      missing_information: ['RTBC response: timed out after 3 attempts, so tier, cost and PA flag are unconfirmed by the payer'], conflicts: [], confidence: 64,
+      recommended_action: 'Re-run the benefit check or confirm with PrimeHealth by phone before routing to Patient Access for PA preparation.',
+      why: 'The PLAN-C formulary covers Kesimpta on Tier 4 with PA and no step therapy, and the cost share gives 33% up to $300. But the RTBC request returned nothing, so the payer has not confirmed any of it. This is a qualified reading only; it needs a person before routing (Workflow rules §Escalation).',
+      citations: ['Eligibility 271 ' + m.id, 'RTBC ' + m.id, 'PLAN-C formulary §Kesimpta', 'PLAN-C cost share', 'Workflow rules §Escalation'] });
+    if (c.key === 'MBR-004@POLICY') return demo({ coverage_summary: 'Covered, but the step-therapy rule is ambiguous', benefit_pathway: 'Pharmacy', formulary_tier: 'Tier 4 (Specialty)', prior_authorization: 'Required', step_therapy: 'Unclear: bulletin UM-2026-07', quantity_limit: '30-day supply', member_cost: '30% coinsurance, max $250 per fill', site_of_care: info.site,
+      missing_information: ['Which anti-CD20 agent, if any, the bulletin requires first, and from what date'], conflicts: ['Reading 1: no step therapy applies (no agent is named, so no requirement can be checked)', 'Reading 2: a trial of a preferred anti-CD20 agent is required before Kesimpta for new starts'], confidence: 58,
+      recommended_action: 'Do not route. A Benefits Specialist asks Everwell to clarify bulletin UM-2026-07, then BenefitsIQ is run again.',
+      why: 'The PLAN-A entry covers Kesimpta on Tier 4 with PA, but bulletin UM-2026-07 says step therapy "may apply" without naming a drug or date. A new start with no prior medications could pass or fail depending on the reading, so BenefitsIQ shows both readings instead of choosing one.',
+      citations: ['PLAN-A formulary §Kesimpta', 'EHR medication history ' + m.id, 'RTBC ' + m.id, 'PLAN-A cost share', 'Workflow rules §Escalation'] });
+    var checklist = CRITERIA[c.drug] && rule !== X ? docsFor(c).map(function (x) { return { item: x[0], status: x[1] === 'On file' ? 'On file' : 'Missing', source: 'Clinical documents ' + m.id }; }) : [];
+    if (c.key === 'MBR-010@MRI') { var mri = determine(m, c.plan, c.drug);
+      return { decision: 'Action required', coverage_summary: 'Covered with PA, but a required clinical document is missing', benefit_pathway: 'Medical', formulary_tier: mri.tier, prior_authorization: 'Required', step_therapy: mri.step, quantity_limit: mri.days, member_cost: mri.cost, site_of_care: info.site,
+        missing_information: ['Brain MRI within the last 12 months: requested 2026-10-14, not received'], documentation_checklist: checklist, conflicts: [], confidence: 91,
+        recommended_action: 'Contact Lakeshore Neurology for the MRI report. Prepare the PA only once it is on file.', route_to: 'Prescriber outreach',
+        why: 'Ocrevus is covered on PLAN-A under the medical benefit with PA, and the interferon beta-1a step is met. The PA policy needs three clinical documents; the MS diagnosis and EDSS score are on file but the MRI is not, so the PA package is incomplete. BenefitsIQ does not assume the MRI exists.',
+        citations: ['Referral ' + m.id, 'PLAN-A formulary §Ocrevus', 'Clinical documents ' + m.id, 'EHR medication history ' + m.id, 'PLAN-A cost share', 'Workflow rules §Routing'] }; }
+    var cites = ['Referral ' + m.id, 'Eligibility 271 ' + m.id, c.plan + ' formulary §' + c.drug, 'Workflow rules §Routing'];
+    if (t.decision !== 'Not covered') cites.splice(3, 0, 'RTBC ' + m.id, c.plan + ' cost share');
+    else cites.splice(3, 0, 'RTBC ' + m.id);
+    if (rule !== X && rule.step) cites.splice(2, 0, 'EHR medication history ' + m.id);
+    if (checklist.length) cites.splice(3, 0, 'Clinical documents ' + m.id);
+    var why; var action; var missing = [];
+    if (t.decision === 'Not covered') {
+      why = c.drug + ' is excluded from the ' + c.plan + ' documented ' + info.benefit + '-benefit policy. This does not establish coverage under other paths. No tier or cost is established in this documented benefit path, so none is given. Other benefit paths and exceptions require verification.';
+      action = 'Confirm the exclusion with the payer, tell the prescriber a formulary exception would be needed, and refer to Financial Navigation. Do not suggest another therapy.';
+    } else if (t.decision === 'Action required') {
+      missing.push('Documentation of a ' + rule.step + ' trial, or a step-therapy exception from the prescriber');
+      why = 'Eligibility is active and ' + c.drug + ' is covered on ' + c.plan + ' (' + t.tier + '), but the plan requires a prior trial of ' + rule.step + ' and the EHR medication history does not document it; this does not prove the drug was never tried or failed. This is not a denial: the case needs the step-therapy evidence or an exception first.';
+      action = 'Contact the prescriber for documentation of a ' + rule.step + ' trial or a step-therapy exception, then prepare the PA.';
+    } else {
+      why = 'Eligibility is active. The ' + c.plan + ' formulary places ' + c.drug + ' on ' + t.tier + ' with prior authorization ' + t.pa.toLowerCase() + ' and ' + (rule.step ? 'a ' + rule.step + ' step matched in the synthetic medication history; trial details still require verification' : 'no step therapy') + '. ' + (info.benefit === 'Medical' ? 'It is a medical-benefit drug given at an approved infusion center, so RTBC has no estimate; patient responsibility requires medical-benefit verification, including drug and administration services.' : 'RTBC agrees on tier, cost-share rule and PA requirement; neither establishes final patient payment or PA approval.') + ' Member cost is ' + t.cost + '.' + (checklist.length ? ' All ' + checklist.length + ' PA clinical documents are on file.' : '');
+      action = t.pa === 'Required' ? 'Route to Patient Access for PA preparation' + (info.benefit === 'Medical' ? '; Care Coordination then schedules an approved infusion center.' : '.') : 'Route to Fulfillment to schedule the ' + t.days + '.';
+    }
+    var conf = t.decision === 'Approved' ? 94 : 90;
+    return { decision: t.decision, coverage_summary: t.decision === 'Approved' ? 'Formulary support on ' + c.plan + ' only; PA status and dispense readiness not established' : t.decision === 'Not covered' ? 'Excluded from the ' + c.plan + ' formulary' : 'Formulary supported, but step-therapy evidence is not documented',
+      benefit_pathway: t.benefit, formulary_tier: t.tier, prior_authorization: t.pa, step_therapy: t.step, quantity_limit: t.days, member_cost: t.cost, site_of_care: rule === X ? '' : info.site,
+      missing_information: missing, documentation_checklist: checklist, conflicts: [], confidence: conf, recommended_action: action, route_to: t.route, why: why, citations: cites };
+  }
+
+  // ================================================================ icons: inline line icons, drawn by the page (no emoji, no image files)
+  var ICONS = {
+    biq: '<circle cx="4" cy="5" r="2"/><circle cx="4" cy="12" r="2"/><circle cx="4" cy="19" r="2"/><path d="M6 5c4.5 0 4.5 7 8 7M6 12h8M6 19c4.5 0 4.5-7 8-7"/><circle cx="16.5" cy="12" r="3" fill="currentColor"/><path d="M21 2.5v4M19 4.5h4"/>',
+    caretrack: '<rect x="3" y="3" width="18" height="18" rx="5"/><path d="M12 8v8M8 12h8"/>',
+    referral: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>',
+    shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+    bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+    pill: '<rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-45 12 12)"/><path d="M8.5 8.5l7 7"/>',
+    book: '<path d="M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2z"/><path d="M4 21a2 2 0 0 1 2-2h14v2"/><path d="M9 8h7M9 12h5"/>',
+    receipt: '<path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h4"/>',
+    flow: '<rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="15" width="6" height="6" rx="1"/><path d="M6 9v4a2 2 0 0 0 2 2h7"/>',
+    alert: '<circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
+    stop: '<path d="M8 2h8l6 6v8l-6 6H8l-6-6V8z"/><path d="M8 12h8"/>',
+    activity: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+    sparkles: '<path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0l1.58 6.14a2 2 0 0 0 1.44 1.44l6.14 1.58a.5.5 0 0 1 0 .96l-6.14 1.58a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z"/><path d="M20 3v4M22 5h-4M4 17v2M5 18H3"/>',
+    okc: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+    warn: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/>',
+    info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+    xc: '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/>',
+    arrow: '<path d="M5 12h14M12 5l7 7-7 7"/>',
+    clipboard: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
+    download: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>',
+    chevron: '<path d="m6 9 6 6 6-6"/>',
+    'chevron-r': '<path d="m9 6 6 6-6 6"/>',
+    db: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/>'
+  };
+  function svgFor(name) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || '') + '</svg>'; }
+  function icon(name, extra) { var span = document.createElement('span'); span.className = 'ic' + (extra ? ' ' + extra : ''); span.innerHTML = svgFor(name); return span; }
+  document.querySelectorAll('[data-icon]').forEach(function (node) { node.innerHTML = svgFor(node.getAttribute('data-icon')); });
+
+  // ================================================================ small helpers
+  var $ = function (id) { return document.getElementById(id); };
+  function el(tag, className, text) { var node = document.createElement(tag); if (className) node.className = className; if (text !== undefined) node.textContent = text; return node; }
+  function field(label, value, extra) { var row = el('div', 'field'); row.appendChild(el('span', 'k', label)); row.appendChild(el('span', 'v' + (extra ? ' ' + extra : ''), value)); return row; }
+  function clock() { var now = new Date(); return ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2) + ':' + ('0' + now.getSeconds()).slice(-2); }
+  function showError(text) { $('error').textContent = text; $('error').hidden = !text; }
+  function norm(s) { return String(s || '').toLowerCase().replace(/[–—]/g, '-').replace(/\s+/g, ' ').trim(); }
+  function list(value) { return Array.isArray(value) ? value.filter(function (x) { return String(x).trim(); }) : (value ? [String(value)] : []); }
+  function wait(ms) { return new Promise(function (resolve) { setTimeout(resolve, ms); }); }
+  function confLabel(n) { n = Number(n); if (!isFinite(n)) return { label: 'Unknown', cls: 'danger', n: 0 }; n = Math.max(0, Math.min(100, Math.round(n))); return n >= 90 ? { label: 'High', cls: 'ok', n: n } : n >= 70 ? { label: 'Medium', cls: 'warn', n: n } : { label: 'Low', cls: 'danger', n: n }; }
+  function decisionClass(d) { return d === 'Approved' ? 'ok' : d === 'Action required' ? 'warn' : 'danger'; }
+
+  var selected = null;   // the case on screen
+  var sources = [];      // its connected sources
+  var run = null;        // the decision on screen
+  var runs = [];         // the audit trail for this visit
+  var outcomes = {};     // case key -> last human action
+  var openedAt = 0;      // when the case was opened, for measured handling time
+  var busy = false;
+  var savedLog = [];     // minutes saved per approved case, this visit
+  var evals = EVALS.map(function (item) {
+    var saved = RECORDED.results.filter(function (row) { return row.key === item.key; })[0] || {};
+    return { actual: saved.actual || '', verdict: saved.verdict || '', note: saved.note || '' };
+  });
+
+  // ================================================================ sample mode and live mode
+  PFAI.onChange(function (state) {
+    $('mode').textContent = state.connected ? 'Live: results come from AI using the connected key' : (PITCH ? 'Demo mode: synthetic data, scripted results' : 'Sample mode: results are examples, not AI');
+    $('mode').className = state.connected ? 'badge ok' : 'badge warn';
+    $('mode').hidden = state.connected && state.verified === true;
+    if (state.connected && !state.verified) $('mode').textContent = 'Signed in · ready for Claude analysis';
+    $('use-ai').hidden = state.connected;
+  });
+  $('use-ai').addEventListener('click', function () {
+    // The pitch build keeps the key bar tucked away until someone asks for real AI.
+    if (PITCH) document.querySelectorAll('[data-pfai-bar], [data-pfai-room]').forEach(function (n) { n.classList.add('pitch-show'); });
+    PFAI.connect();
+  });
+
+  // One Coverage Truth Summary for one case. Resolves to { origin, decision, sample }. Rejects with a message that can be shown.
+  function decide(c) {
+    var srcs = sourcesFor(c);
+    return PFAI.ready.then(function () {
+      if (!PFAI.connected()) return wait(600).then(function () { return { origin: PITCH ? 'Scripted demo result on synthetic data.' : 'Sample result, not produced by AI.', decision: sampleFor(c), sample: true }; });
+      var prompt = ['CASE ' + c.key + ' on ' + c.plan + '. Prepare the Coverage Truth Summary.'].concat(srcs.map(function (s) {
+        return s.ids ? 'SOURCE GROUP ' + s.title + ' (' + s.sys + '):\n' + s.text : 'SOURCE [' + s.id + '] ' + s.title + ' (' + s.sys + '):\n' + s.text;
+      })).join('\n\n');
+      return PFAI.generate({ system: SYSTEM_PROMPT, prompt: prompt, schema: SCHEMA, maxTokens: 2000 }).then(function (reply) {
+        if (!reply.json || typeof reply.json !== 'object') throw new Error('The AI reply could not be read as a Coverage Truth Summary. Try again.');
+        return { origin: 'Proposed by AI. Check it before you approve.', decision: reply.json, sample: false };
+      });
+    });
+  }
+
+  // The agent's own checks before hand-back. Run in the page, on whatever came back.
+  function checksFor(d, c, ids) {
+    var out = []; var known = ids.map(norm);
+    var cites = list(d.citations); var unknown = cites.filter(function (x) { return known.indexOf(norm(x)) < 0; });
+    out.push(unknown.length ? ['warn', 'Sources', unknown.length + ' cited source(s) were not in what it was given'] : ['ok', 'Sources', 'Every cited source exists (' + cites.length + ')']);
+    var policy = cites.some(function (x) { return /formulary §/i.test(x) || /§boundaries/i.test(x); });
+    out.push(policy ? ['ok', 'Traceable', 'Cites the policy rule behind the decision'] : ['warn', 'Traceable', 'No formulary or boundary rule cited']);
+    var conf = confLabel(d.confidence);
+    out.push(conf.n >= 70 ? ['ok', 'Confidence', conf.n + ' (' + conf.label + '), at or above the 70 threshold'] : ['danger', 'Confidence', conf.n + ' (Low): below threshold, must be escalated']);
+    if (d.decision === 'Not covered') out.push((d.formulary_tier || d.member_cost) ? ['danger', 'Invented values', 'A tier or member cost was given for an excluded drug'] : ['ok', 'Invented values', 'No tier or cost given for an excluded drug']);
+    var missing = list(d.missing_information); var conflicts = list(d.conflicts);
+    out.push(missing.length ? ['warn', 'Missing', missing.length + ' item(s) need a person'] : ['ok', 'Missing', 'Nothing missing']);
+    out.push(conflicts.length ? ['warn', 'Conflicts', conflicts.length + ' conflicting signal(s) shown, none chosen'] : ['ok', 'Conflicts', 'Sources agree']);
+    var docs = Array.isArray(d.documentation_checklist) ? d.documentation_checklist : [];
+    if (docs.length) { var gaps = docs.filter(function (x) { return x && x.status !== 'On file'; }).length; out.push(gaps ? ['warn', 'PA documents', gaps + ' of ' + docs.length + ' required documents not on file'] : ['ok', 'PA documents', 'All ' + docs.length + ' required documents on file']); }
+    if (d.decision === 'Refused') out.push(['danger', 'Authority', 'Outside what BenefitsIQ may recommend: handed to a person']);
+    if (d.decision === 'Escalate') out.push(['danger', 'Escalation', 'Not safe to route on this evidence: handed to a Benefits Specialist']);
+    return { list: out, unknown: unknown, conf: conf };
+  }
+
+  // ================================================================ the worklist: one list, test cases first
+  var SHORT = { 'Rheumatoid arthritis': 'RA', 'Multiple sclerosis': 'MS', "Crohn's disease": "Crohn's", 'Plaque psoriasis': 'Psoriasis', 'Chronic myeloid leukemia': 'CML', 'Cystic fibrosis': 'CF', 'Type 2 diabetes': 'T2D', 'Obesity': 'Obesity', 'Hepatitis C': 'Hep C' };
+  var ORDER = EVALS.map(function (e) { return e.key; }).concat(DEMOS.map(function (c) { return c.key; }));
+  function worklist() {
+    var all = ORDER.map(caseByKey).concat(CASES.filter(function (c) { return ORDER.indexOf(c.key) < 0; }));
+    if (!PITCH) return all;
+    // The pitch shows each patient once: a scenario built on a member replaces that member's plain referral.
+    var scenario = {}; all.forEach(function (c) { if (c.key.indexOf('@') > 0) scenario[c.m.id] = true; });
+    return all.filter(function (c) { return c.key.indexOf('@') > 0 || !scenario[c.m.id]; });
+  }
+  function tagFor(c) {
+    if (PITCH) return null;
+    var e = EVALS.filter(function (x) { return x.key === c.key; })[0];
+    if (e) return ['Test: ' + e.label, ''];
+    if (c.demo) return ['Demo: ' + c.demo, 'demo'];
+    return null;
+  }
+  function isRouted(a) { return a === 'Approved' || a === 'Edited and approved'; }
+  function renderCases() {
+    var box = $('queue'); box.textContent = '';
+    var all = worklist();
+    $('wl-count').textContent = all.filter(function (c) { return !outcomes[c.key]; }).length + ' open';
+    all.forEach(function (c) {
+      var row = el('button', 'wl-row' + (selected && selected.key === c.key ? ' is-active' : ''));
+      row.type = 'button'; row.setAttribute('data-case', c.key);
+      var r1 = el('span', 'r1'); r1.appendChild(el('span', '', c.m.first + ' ' + c.m.last + '.'));
+      var done = outcomes[c.key];
+      r1.appendChild(done ? el('span', 'bq-pill ' + (isRouted(done) ? 'p-green' : 'p-red'), done === 'Edited and approved' ? 'Approved' : done) : el('span', 'd', 'Oct ' + c.m.received.slice(8)));
+      row.appendChild(r1);
+      row.appendChild(el('span', 'r2', c.drug + ' · ' + (SHORT[c.m.diagnosis] || c.m.diagnosis) + ' · ' + c.plan.replace('PLAN-', 'Plan ') + ' · ' + c.m.request));
+      var tag = tagFor(c); if (tag) row.appendChild(el('span', 'wl-tag' + (tag[1] ? ' ' + tag[1] : ''), tag[0]));
+      row.addEventListener('click', function () { select(c.key); });
+      box.appendChild(row);
+    });
+  }
+
+  // ================================================================ small display parts
+  function pill(text, tone) {
+    var p = el('span', 'bq-pill' + (tone ? ' p-' + tone : ''));
+    var name = { green: 'okc', amber: 'warn', blue: 'info', red: 'xc' }[tone];
+    if (name) p.appendChild(icon(name));
+    p.appendChild(document.createTextNode(text)); return p;
+  }
+  function toneFor(key, value) {
+    var v = String(value || '');
+    if (!v || /^not applicable$/i.test(v)) return '';
+    if (key === 'benefit_pathway') return v === 'Unclear' ? 'amber' : 'blue';
+    if (key === 'prior_authorization') return v === 'Not required' ? 'green' : 'amber';
+    if (key === 'step_therapy') return /^not met/i.test(v) ? 'red' : /^met/i.test(v) || /^no step/i.test(v) ? 'green' : 'amber';
+    return '';
+  }
+  var DECISION_TONE = { Approved: 'green', 'Action required': 'amber', 'Not covered': 'red', Escalate: 'red', Refused: 'red' };
+  function docsOf(d) { return Array.isArray(d.documentation_checklist) ? d.documentation_checklist.filter(Boolean) : []; }
+  function toneOf(cls) { return { ok: 'green', warn: 'amber', danger: 'red', info: 'blue' }[cls] || ''; }
+  function mmss(sec) { sec = Math.max(0, Math.round(sec)); return Math.floor(sec / 60) + ':' + ('0' + (sec % 60)).slice(-2); }
+  function brief(s) { return s.say || s.rows.map(function (r) { return r[1]; }).slice(0, 3).join(' · '); }
+
+  // One source = one row; open it to see what that system returned and what it cannot tell you on its own.
+  function sourceRow(s, pillText, tone, extra) {
+    var d = el('details', 'src-row'); var sm = el('summary');
+    sm.appendChild(icon('chevron-r', 'chev')); sm.appendChild(icon(s.icon)); sm.appendChild(el('b', '', s.title)); sm.appendChild(el('span', 'brief', brief(s)));
+    sm.appendChild(pill(pillText, tone)); d.appendChild(sm);
+    var raw = el('div', 'src-raw'); raw.appendChild(el('div', 'sys', s.sys + ' · [' + s.id + ']'));
+    var ul = el('ul'); s.rows.forEach(function (r) { ul.appendChild(el('li', '', r[0] + ': ' + r[1])); }); raw.appendChild(ul);
+    if (s.gap) raw.appendChild(el('div', 'gap', 'On its own: ' + s.gap));
+    if (extra) raw.appendChild(extra);
+    d.appendChild(raw); return d;
+  }
+  function renderSources(state) {
+    var box = $('sources'); box.textContent = '';
+    var read = state.filter(function (x) { return x === 'read'; }).length;
+    $('sources-meta').textContent = busy ? 'Reading ' + Math.min(read + 1, sources.length) + ' of ' + sources.length : sources.length + ' available';
+    sources.forEach(function (s, i) {
+      var st = state[i];
+      var row = sourceRow(s, st === 'read' ? 'Read' : st === 'reading' ? 'Reading' : s.status, st === 'read' ? 'green' : st === 'reading' ? 'blue' : toneOf(s.cls));
+      if (st === 'reading') row.classList.add('is-reading');
+      box.appendChild(row);
+    });
+  }
+
+  // ================================================================ case status (right rail) and the capstone stepper
+  var handoffOpen = '';
+  function renderWorkflow() {
+    var box = $('wf'); box.textContent = ''; var steps;
+    if (!selected) steps = [['', 'No case open', 'Pick a referral from the worklist']];
+    else {
+      var a = run && run.action; var routed = isRouted(a);
+      steps = [
+        ['done', 'Referral received', selected.m.channel + ' · Oct ' + selected.m.received.slice(8)],
+        ['done', 'Coverage active', 'Eligibility 271'],
+        [run ? 'done' : 'now', 'Benefits investigation', run ? 'Summary ready' : busy ? 'BenefitsIQ is reading sources' : 'Waiting: use BenefitsIQ'],
+        [a ? (routed ? 'done' : 'held') : run ? 'now' : '', 'Human review', a ? (a === 'Edited and approved' ? 'Edited and approved' : a) : run ? (handoffOpen ? 'Reviewing the handoff' : 'Waiting for you') : 'Not started'],
+        [routed ? 'done' : a ? 'held' : '', 'Routed', routed ? String(run.decision.route_to).replace(' - ', ' · ') : a ? 'Held: nothing routed' : 'Only after approval']
+      ];
+    }
+    steps.forEach(function (s) {
+      var li = el('li', s[0]); var dot = icon(s[0] === 'held' ? 'stop' : 'check', 'dot');
+      if (s[0] !== 'done' && s[0] !== 'held') dot.innerHTML = '';
+      li.appendChild(dot); var t = el('span'); t.appendChild(el('b', '', s[1])); t.appendChild(document.createTextNode(s[2])); li.appendChild(t); box.appendChild(li);
+    });
+  }
+  // The five stages of the loop, named in order (capstone build only).
+  function renderStepper() {
+    var box = $('stepper'); box.textContent = '';
+    if (PITCH || !selected) return;
+    var stage = !run ? 2 : (run.action ? 6 : 5);
+    ['Input', 'Context', 'Decision', 'Output', 'Review'].forEach(function (nm, i) {
+      var n = i + 1; var s = el('span', 'step' + (n < stage ? ' done' : n === stage ? ' now' : '')); s.setAttribute('data-n', String(n));
+      s.appendChild(el('i', '', String(n))); s.appendChild(document.createTextNode(nm)); box.appendChild(s);
+    });
+  }
+
+  // ================================================================ opening a case
+  function setRunButton(mode, text) {
+    var b = $('run'); b.classList.toggle('is-quiet', mode === 'done'); $('ai-tag').hidden = mode !== 'ready';
+    $('prog').hidden = true;
+    if (mode === 'ready') { $('run-label').textContent = 'Use BenefitsIQ'; $('run-sub').textContent = 'Analyze coverage across ' + sources.length + ' connected sources'; }
+    if (mode === 'running') { $('run-label').textContent = text; $('run-sub').textContent = 'You can keep reading while it works'; }
+    if (mode === 'done') { $('run-label').textContent = 'Run again'; $('run-sub').textContent = 'Re-reads all ' + sources.length + ' sources'; }
+  }
+  // "At a glance": only what CareTrack already holds. It never guesses the coverage answer.
+  function glanceFor(c) {
+    var m = c.m; var first = m.first; var dx = m.diagnosis.toLowerCase().replace("crohn's", "Crohn's");
+    var prescriber = m.prescriber.replace(' (fictional)', ''); var who = prescriber.split(', ');
+    var lead = [];
+    if (c.options) lead = [['', 'The referral for '], ['b', first], ['', ' lists two therapies, '], ['b', c.options[0]], ['', ' or '], ['b', c.options[1]], ['', ', for ' + dx + '.']];
+    else if (m.request === 'Therapy switch') lead = [['b', first], ['', ' is switching ' + (m.prior.length ? 'from ' : '')]].concat(m.prior.length ? [['b', m.prior[m.prior.length - 1]], ['', ' ']] : []).concat([['', 'to '], ['b', c.drug], ['', ' for ' + dx + '.']]);
+    else if (m.request === 'Refill') lead = [['b', first], ['', ' needs a refill of '], ['b', c.drug], ['', ' for ' + dx + '.']];
+    else lead = [['b', first], ['', ' is starting '], ['b', c.drug], ['', ' for ' + dx + '.']];
+    var urgent = m.request !== 'Refill'; var day = 'Oct ' + Number(m.received.slice(8));
+    var story = lead.concat([['', ' ' + who[0] + (who[1] ? ' (' + who[1] + ')' : '') + ' sent it by ' + m.channel.toLowerCase() + ' on '], ['b', day], ['', '; it is due '], ['b', urgent ? 'today' : 'in 2 business days'], ['', '.']]);
+    var hasDocs = sources.some(function (s) { return /^Clinical documents/.test(s.id); });
+    var docs = hasDocs ? docsFor(c) : []; var onFile = docs.filter(function (x) { return x[1] === 'On file'; }).length; var missing = docs.filter(function (x) { return x[1] !== 'On file'; });
+    var tiles = [
+      ['Coverage', 'Active', PLANS[c.plan].name, ''],
+      ['Prior therapy', m.prior.length ? m.prior.length + ' on file' : 'None on file', m.prior.length ? m.prior.join(', ') : 'No earlier medications', ''],
+      ['Clinical documents', docs.length ? onFile + ' of ' + docs.length + ' on file' : 'None attached', missing.length ? missing.map(function (x) { return x[0].replace('Brain ', '').replace(' within the last 12 months', '') + ': ' + x[2]; }).join('; ') : docs.length ? 'Diagnosis, imaging, notes' : 'Chart notes only', missing.length ? 'warn' : ''],
+      ['Turnaround', urgent ? 'Due today' : 'Due in 2 days', m.request + (urgent ? ' · same day' : ' · 2 business days'), '']
+    ];
+    var chips = [];
+    missing.forEach(function (x) { chips.push([x[0].replace('Brain ', '').replace(' within the last 12 months', '') + ' not received', 'amber']); });
+    if (c.options) chips.push(['Two therapies listed', 'amber']);
+    if (c.override && c.override.rtbc && c.override.rtbc.cls === 'danger') chips.push(['Benefit check did not respond', 'amber']);
+    if (c.override && c.override.policy) chips.push(['New payer bulletin', 'amber']);
+    if (c.override && c.override.elig) chips.push(['Eligibility updated Oct 1', 'amber']);
+    chips.push(['No PA on file', '']);
+    if (!c.options && DRUGS[c.drug] && /infusion/i.test(DRUGS[c.drug].site)) chips.push(['Infusion drug', '']);
+    chips.push([m.request, '']);
+    var line = (c.options ? 'Two therapies listed' : (m.request === 'Therapy switch' && m.prior.length ? 'Switching from ' + m.prior[m.prior.length - 1] + ' to ' + c.drug : m.request + ' · ' + c.drug)) + ' · coverage active' + (docs.length ? ' · documents ' + onFile + ' of ' + docs.length : '') + ' · due ' + (urgent ? 'today' : 'in 2 days');
+    return { story: story, tiles: tiles, chips: chips, line: line };
+  }
+  function renderGlance(c) {
+    var g = glanceFor(c); var box = $('glance'); box.textContent = '';
+    var sm = el('summary'); sm.appendChild(icon('chevron-r', 'chev')); sm.appendChild(el('b', '', 'At a glance'));
+    sm.appendChild(el('span', 'g-line', g.line)); sm.appendChild(el('span', 'm g-src', 'From CareTrack · before BenefitsIQ')); box.appendChild(sm);
+    var body = el('div', 'g-body');
+    var story = el('p', 'g-story'); g.story.forEach(function (part) { story.appendChild(part[0] ? el('b', '', part[1]) : document.createTextNode(part[1])); }); body.appendChild(story);
+    var tiles = el('div', 'g-tiles');
+    g.tiles.forEach(function (t) { var d = el('div', 'g-tile' + (t[3] ? ' is-warn' : '')); d.appendChild(el('div', 'k', t[0])); d.appendChild(el('div', 'v', t[1])); d.appendChild(el('div', 's', t[2])); tiles.appendChild(d); });
+    body.appendChild(tiles);
+    var chips = el('div', 'g-chips'); g.chips.forEach(function (x) { chips.appendChild(pill(x[0], x[1])); }); body.appendChild(chips);
+    box.appendChild(body); box.open = true; box.hidden = false;
+  }
+  function select(key) {
+    if (busy) return;
+    selected = caseByKey(key); run = null; handoffOpen = ''; showError(''); openedAt = Date.now();
+    sources = sourcesFor(selected);
+    $('empty').hidden = true; $('work').hidden = false;
+    ['result', 'handoff', 'route', 'edit-box', 'reason-box', 'live'].forEach(function (id) { $(id).hidden = true; });
+    $('sources-fold').hidden = false; $('sources-fold').open = false; $('run').disabled = false;
+    setRunButton('ready');
+    var m = selected.m; var plan = PLANS[selected.plan]; var box = $('case'); box.textContent = '';
+    var head = el('div', 'pt-head');
+    head.appendChild(el('div', 'pt-av', m.first.charAt(0) + m.last));
+    var main = el('div');
+    var name = el('div', 'pt-name'); name.appendChild(document.createTextNode(m.first + ' ' + m.last + '.')); name.appendChild(el('span', 'mrn', 'MRN ' + m.id.replace('MBR-', '7700'))); main.appendChild(name);
+    main.appendChild(el('div', 'pt-line', m.age + ' ' + m.sex + ' · ' + m.state + ' · ' + selected.plan.replace('PLAN-', 'Plan ') + ' ' + plan.name + ' · ' + selected.drug + ' for ' + m.diagnosis.toLowerCase().replace("crohn's", "Crohn's") + ' · ' + m.request + ' · ' + m.channel + ' ' + m.referral));
+    var note = PITCH && selected.pitchVariant ? selected.pitchVariant : selected.variant;
+    if (note) main.appendChild(el('div', 'pt-note', 'Note on file: ' + note));
+    head.appendChild(main); box.appendChild(head);
+    $('refreshed').textContent = 'Coverage data from ' + sources.length + ' connected systems';
+    renderGlance(selected); renderSources([]); renderWorkflow(); renderStepper(); renderCases();
+    if (window.matchMedia('(max-width: 1180px)').matches) $('loop').scrollIntoView({ block: 'start' });
+  }
+
+  // ================================================================ running BenefitsIQ, with a live view of the work
+  // Left: what each connected system returned (straight from the source data). Right: the checks BenefitsIQ is
+  // instructed to make. The checks are paced on screen; the last one only completes when the real answer arrives.
+  function checksPlan(c) {
+    var hasDocs = sources.some(function (s) { return /^Clinical documents/.test(s.id); });
+    return [
+      ['Medical or pharmacy benefit?', 'Comparing payer policy, eligibility and RTBC'],
+      ['Prior authorization', 'Payer policy for ' + c.drug],
+      ['Step therapy', 'Policy rule against medication history'],
+      ['PA documents', hasDocs ? 'Policy criteria against clinical documents' : 'Policy criteria for ' + c.drug],
+      ['Do the sources agree?', 'Eligibility, RTBC and policy side by side'],
+      ['Cost and supply', 'Plan cost share and formulary days supply'],
+      ['Next team and confidence', 'Routing rules · confidence threshold 70']
+    ];
+  }
+  function finding(s) { return el('span', 'f' + (s.cls === 'danger' ? ' is-warn' : ''), brief(s)); }
+  function renderLive(st) {
+    var box = $('live'); box.textContent = '';
+    var nS = sources.length, nC = st.checks.length;
+    var readN = st.src.filter(function (x) { return x === 'read'; }).length; var doneN = st.chk.filter(function (x) { return x === 'done'; }).length;
+    var pct = Math.round((readN + doneN) / (nS + nC) * 100);
+    var phase2 = readN === nS;
+    var lh = el('div', 'lh'); lh.appendChild(icon('activity', 'bq-logo'));
+    var t = el('div'); t.appendChild(el('b', '', 'BenefitsIQ is working · ' + (phase2 ? 'Reconciling what the sources say' : 'Reading connected sources')));
+    t.appendChild(el('small', '', phase2 ? 'All ' + nS + ' sources read · ' + doneN + ' of ' + nC + ' checks done' : readN + ' of ' + nS + ' sources read')); lh.appendChild(t);
+    var pc = el('div', 'pct'); pc.appendChild(el('b', '', pct + '%')); pc.appendChild(document.createTextNode(' · usually under 30 seconds'));
+    var bar = el('div', 'lbar'); var fill = el('i'); fill.style.width = pct + '%'; bar.appendChild(fill); pc.appendChild(bar); lh.appendChild(pc);
+    box.appendChild(lh);
+    var lb = el('div', 'lb'); var left = el('div'); var right = el('div');
+    left.appendChild(el('p', 'eyebrow', '1 · What each system returned'));
+    sources.forEach(function (s, i) {
+      var state = st.src[i]; var r = el('div', 'sr ' + (state === 'read' ? 'sd' : state === 'reading' ? 'sn' : 'sw')); r.setAttribute('data-src', String(i));
+      var dot = el('span', 'st'); if (state === 'read') dot.appendChild(icon('check')); r.appendChild(dot);
+      r.appendChild(el('b', '', s.title));
+      r.appendChild(state === 'read' ? finding(s) : el('span', 'f', state === 'reading' ? 'Reading…' : 'Queued'));
+      left.appendChild(r);
+    });
+    right.appendChild(el('p', 'eyebrow', '2 · What BenefitsIQ is checking'));
+    st.checks.forEach(function (q, i) {
+      var state = st.chk[i]; var r = el('div', 'rs ' + (state === 'done' ? 'sd' : state === 'now' ? 'sn' : 'sw')); r.setAttribute('data-chk', String(i));
+      var dot = el('span', 'st'); if (state === 'done') dot.appendChild(icon('check')); r.appendChild(dot);
+      var d = el('div'); d.appendChild(document.createTextNode(q[0])); d.appendChild(el('small', '', state ? q[1] : 'Waiting for sources')); r.appendChild(d);
+      right.appendChild(r);
+    });
+    lb.appendChild(left); lb.appendChild(right); box.appendChild(lb);
+    var note = el('div', 'lnote'); note.appendChild(el('span', '', 'Findings come straight from each connected system. The recommendation appears when every check is done.')); note.appendChild(el('span', '', 'Nothing is routed yet')); box.appendChild(note);
+  }
+  $('run').addEventListener('click', function () {
+    if (busy || !selected) return;
+    var c = selected; run = null; handoffOpen = ''; showError('');
+    ['result', 'handoff', 'route', 'edit-box', 'reason-box', 'sources-fold'].forEach(function (id) { $(id).hidden = true; });
+    $('glance').hidden = false; $('glance').open = false;
+    busy = true; $('run').disabled = true; var started = Date.now();
+    var st = { src: sources.map(function () { return ''; }), checks: checksPlan(c), chk: [] }; st.chk = st.checks.map(function () { return ''; });
+    $('live').hidden = false; renderLive(st);
+    setRunButton('running', 'Reading sources… 0 of ' + sources.length); renderWorkflow(); renderStepper();
+    var answer = decide(c); var stopped = false; answer.catch(function () { stopped = true; });
+    var flow = sources.reduce(function (p, s, i) {
+      return p.then(function () { if (stopped) return; st.src[i] = 'reading'; setRunButton('running', 'Reading sources… ' + (i + 1) + ' of ' + sources.length); renderLive(st); return wait(320); })
+              .then(function () { if (stopped) return; st.src[i] = 'read'; renderLive(st); });
+    }, Promise.resolve()).then(function () {
+      return st.checks.reduce(function (p, q, i) {
+        return p.then(function () {
+          if (stopped) return;
+          st.chk[i] = 'now'; setRunButton('running', 'Checking… ' + (i + 1) + ' of ' + st.checks.length); renderLive(st);
+          // The last check waits for the real answer.
+          return i === st.checks.length - 1 ? answer.then(function () { return wait(250); }, function () {}) : wait(420);
+        }).then(function () { if (stopped) return; st.chk[i] = 'done'; renderLive(st); });
+      }, Promise.resolve());
+    });
+    Promise.all([answer, flow]).then(function (both) {
+      var result = both[0];
+      run = { key: c.key, origin: result.origin, sample: result.sample, decision: result.decision, action: '', time: clock(), started: started, ready: Date.now() };
+      runs.push(run); busy = false;
+      // Once BenefitsIQ has decided, only the decision stays on screen.
+      ['live', 'glance', 'sources-fold'].forEach(function (id) { $(id).hidden = true; });
+      showDecision(result); renderLog(); setRunButton('done');
+    }).catch(function (error) {
+      // A failed call is shown as it is. It never falls back to a sample, and nothing is recorded.
+      stopped = true; busy = false; $('live').hidden = true; $('glance').open = true; $('sources-fold').hidden = false;
+      setRunButton('ready'); showError(error.message || 'Something went wrong. Try again.');
+    }).then(function () { busy = false; $('run').disabled = false; renderWorkflow(); renderStepper(); });
+  });
+
+  // ================================================================ the Coverage Truth Summary
+  function recLine(d) {
+    var r = (d.route_to || 'the next team').replace(' - ', ' · ');
+    if (d.decision === 'Approved') return ['okc', 'green', 'Recommended: approve and route to ' + r];
+    if (d.decision === 'Action required') return ['warn', 'amber', 'Action needed first: route to ' + r];
+    if (d.decision === 'Not covered') return ['xc', 'red', 'Not covered on this plan: route to ' + r];
+    if (d.decision === 'Refused') return ['stop', 'red', 'Refused: BenefitsIQ does not choose a therapy'];
+    if (d.decision === 'Escalate') return ['xc', 'red', 'Escalate to a Benefits Specialist: ' + (list(d.conflicts).length ? 'sources disagree' : list(d.missing_information).length ? 'information is missing' : 'a person must decide')];
+    return ['warn', 'amber', 'BenefitsIQ returned no clear recommendation'];
+  }
+  function showDecision(result) {
+    var d = result.decision || {}; var c = selected;
+    var check = checksFor(d, c, knownIds(sources)); run.check = check;
+    var tone = DECISION_TONE[d.decision] || 'red';
+    $('bq-head').className = 'bq-head' + (tone === 'red' ? ' is-red' : tone === 'amber' ? ' is-amber' : '');
+    $('origin').textContent = result.origin;
+    var meter = $('meter'); meter.textContent = '';
+    var col = check.conf.cls === 'ok' ? 'var(--bq-green-ink)' : check.conf.cls === 'warn' ? 'var(--bq-amber)' : 'var(--bq-red)';
+    meter.appendChild(document.createTextNode('Confidence ')); var b = el('b', '', check.conf.n + '% · ' + check.conf.label); b.style.color = col; meter.appendChild(b);
+    var bar = el('div', 'bq-meter'); var fill = el('i'); fill.style.width = check.conf.n + '%'; fill.style.background = check.conf.cls === 'ok' ? 'var(--bq-green)' : col; bar.appendChild(fill); meter.appendChild(bar);
+    renderRec(d);
+    var rule = d.decision === 'Refused' ? 'Rule: BenefitsIQ does not make clinical treatment recommendations. A qualified clinical pharmacist takes this case.' : d.decision === 'Escalate' ? 'Rule: conflicting sources, missing information or confidence under 70 go to a Benefits Specialist. BenefitsIQ does not pick a side.' : '';
+    $('rule').textContent = ''; if (rule) { $('rule').appendChild(icon('stop')); $('rule').appendChild(el('span', '', rule)); } $('rule').hidden = !rule;
+    renderFacts(d);
+    renderAttention(d, check);
+    // Why: in BenefitsIQ's own words, plus the checks it ran before handing back.
+    $('why').textContent = d.why || 'BenefitsIQ gave no reason.';
+    var checks = $('checks'); checks.textContent = ''; var passed = 0;
+    check.list.forEach(function (item) { if (item[0] === 'ok') passed += 1; var r = el('div', 'chk-row'); r.appendChild(pill(item[1], { ok: 'green', warn: 'amber', danger: 'red' }[item[0]])); r.appendChild(el('span', '', item[2])); checks.appendChild(r); });
+    $('think-meta').textContent = passed === check.list.length ? passed + ' checks passed' : passed + ' passed · ' + (check.list.length - passed) + ' need a person';
+    renderEvidence(d, check);
+    $('think').open = false; $('evidence').open = false;
+    $('result').hidden = false; $('edit-box').hidden = true; $('reason-box').hidden = true;
+    var blocked = d.decision === 'Refused' || d.decision === 'Escalate' || check.conf.n < 70;
+    $('approve').disabled = blocked; $('edit').disabled = blocked; $('reject').disabled = false; $('escalate').disabled = false;
+    $('gate-note').textContent = blocked ? 'Approve is not available here: a person must escalate or reject this case.' : '';
+    $('gate-note').hidden = !blocked;
+  }
+  function renderRec(d) {
+    var rl = recLine(d); var v = $('verdict'); v.className = 'rec tone-' + rl[1]; v.textContent = ''; v.appendChild(icon(rl[0])); v.appendChild(el('span', '', rl[2]));
+    // The route is already in the line above; the next action is added only when it says something new.
+    $('summary-line').textContent = (d.coverage_summary || '').replace(/\.?$/, '.') + (d.decision !== 'Approved' && d.recommended_action ? ' ' + d.recommended_action : '');
+  }
+  function renderFacts(d) {
+    var box = $('fields'); box.textContent = '';
+    var docs = docsOf(d); var on = docs.filter(function (x) { return x.status === 'On file'; }).length;
+    var site = d.site_of_care && /infusion/i.test(d.site_of_care) ? ' · infusion center' : '';
+    var rows = [
+      ['benefit_pathway', 'Benefit', (d.benefit_pathway || 'Unclear') + (d.benefit_pathway && d.benefit_pathway !== 'Unclear' ? site : ''), toneFor('benefit_pathway', d.benefit_pathway || 'Unclear')],
+      ['prior_authorization', 'PA required', (d.prior_authorization || 'Unclear') + (docs.length ? ' · docs ' + on + '/' + docs.length : ''), docs.length && on < docs.length ? 'red' : toneFor('prior_authorization', d.prior_authorization)],
+      ['formulary_tier', 'Tier', d.formulary_tier || 'Not applicable', ''],
+      ['step_therapy', 'Step therapy', d.step_therapy || 'Not stated', toneFor('step_therapy', d.step_therapy)],
+      ['member_cost', 'Cost-share rule / estimate', d.member_cost || 'Not applicable', ''],
+      ['quantity_limit', 'Supply', d.quantity_limit || 'Not applicable', '']
+    ];
+    rows.forEach(function (r) { var f = el('div', 'fact'); f.setAttribute('data-field', r[0]); f.appendChild(el('span', 'k', r[1])); f.appendChild(pill(r[2], r[3])); box.appendChild(f); });
+  }
+  function renderAttention(d, check) {
+    var items = [];
+    list(d.conflicts).forEach(function (x) { items.push(['red', x]); });
+    list(d.missing_information).forEach(function (x) { items.push(['amber', x]); });
+    docsOf(d).filter(function (x) { return x.status !== 'On file'; }).forEach(function (x) { if (!list(d.missing_information).some(function (m) { return m.indexOf(x.item) >= 0; })) items.push(['amber', 'PA document ' + (x.status || 'unclear').toLowerCase() + ': ' + x.item]); });
+    check.unknown.forEach(function (x) { items.push(['amber', 'Cited a source it was not given: ' + x]); });
+    var box = $('attn'); box.textContent = ''; box.hidden = !items.length;
+    if (!items.length) return;
+    var red = items.some(function (x) { return x[0] === 'red'; }) || d.decision === 'Escalate' || d.decision === 'Refused';
+    box.className = 'attn' + (red ? ' is-red' : '');
+    var h = el('h4'); h.appendChild(icon('warn')); h.appendChild(document.createTextNode('Needs attention · ' + items.length + (list(d.conflicts).length ? ' (' + list(d.conflicts).length + ' conflicting)' : ''))); box.appendChild(h);
+    var ul = el('ul'); items.forEach(function (x) { ul.appendChild(el('li', '', x[1])); }); box.appendChild(ul);
+  }
+  function renderEvidence(d, check) {
+    var box = $('cites'); box.textContent = ''; var cited = list(d.citations).map(norm); var used = 0;
+    sources.forEach(function (s) {
+      var ids = (s.ids || [s.id]).map(norm);
+      var isUsed = ids.some(function (x) { return cited.indexOf(x) >= 0; });
+      if (isUsed) used += 1;
+      var extra = null;
+      if (/^Clinical documents/.test(s.id) && docsOf(d).length) {
+        extra = el('div'); extra.appendChild(el('div', 'sys', 'PA documentation checklist (from BenefitsIQ):'));
+        var ul = el('ul'); docsOf(d).forEach(function (x) { ul.appendChild(el('li', '', x.item + ': ' + x.status)); }); extra.appendChild(ul);
+      }
+      var p = isUsed ? (s.cls === 'danger' ? [s.status, 'red'] : ['Used', 'green']) : ['Not used', ''];
+      var row = sourceRow(s, p[0], p[1], extra); row.setAttribute('data-used', isUsed ? 'yes' : 'no'); box.appendChild(row);
+    });
+    check.unknown.forEach(function (x) {
+      var row = el('div', 'src-row is-unknown'); var sm = el('div', 'unknown-row'); sm.appendChild(icon('warn')); sm.appendChild(el('b', '', x)); sm.appendChild(pill('Not in the context', 'amber')); row.appendChild(sm); box.appendChild(row);
+    });
+    $('evidence-meta').textContent = used + ' of ' + sources.length + ' sources used' + (check.unknown.length ? ' · ' + check.unknown.length + ' unknown' : '');
+  }
+
+  // ================================================================ the human gate: review, then a handoff you confirm
+  var TEAM = { 'Patient Access - PA preparation': ['Patient Access · PA preparation', 'PA team queue (next available)', 'PA'], 'Fulfillment': ['Fulfillment · dispensing', 'Fulfillment pharmacy queue', 'RX'], 'Prescriber outreach': ['Patient Access · prescriber outreach', 'Outreach team queue', 'OUT'], 'Financial Navigation': ['Financial Navigation', 'Financial counselor queue', 'FIN'], 'Care Coordination': ['Care Coordination', 'Care coordinator queue', 'CC'], 'Benefits Specialist - escalation': ['Benefits Specialist review', 'Senior benefits specialist', 'ESC'], 'Clinical pharmacist review': ['Clinical pharmacist review', 'Clinical pharmacist on duty', 'CLN'] };
+  function handoffFor(c, d) {
+    var r = d.route_to; var team = TEAM[r] || [r, 'Team queue', 'CASE']; var m = c.m; var plan = PLANS[c.plan];
+    var urgent = m.request !== 'Refill'; var due = urgent ? 'due today' : 'due in 2 business days';
+    var docs = docsOf(d); var on = docs.filter(function (x) { return x.status === 'On file'; }).length;
+    var infusion = /infusion/i.test(d.site_of_care || ''); var prescriber = m.prescriber.replace(' (fictional)', '').split(',')[0];
+    var tasks = []; var script; var journey;
+    if (r === 'Patient Access - PA preparation') {
+      tasks.push(['Prepare and submit PA: ' + c.drug + ', ' + plan.name, 'Patient Access · ' + due + (docs.length ? ' · PA docs ' + on + '/' + docs.length + ' attached' : '')]);
+      if (infusion) tasks.push(['Schedule an approved infusion center', 'Care Coordination · starts when the PA is approved']);
+      if (d.member_cost) tasks.push(['Verify patient responsibility; plan rule: ' + d.member_cost, 'Financial Navigation · optional, check copay assistance']);
+      script = 'Your medication needs prior approval from your insurance. Our team is gathering the documents with your doctor. No action is needed from you today; we will call you with the next step.';
+      journey = [['Investigation', 'BenefitsIQ · done', 'd'], ['Review', 'Approved by you', 'd'], ['PA preparation', 'Patient Access · ' + (urgent ? 'today' : '2 days'), 'n'], ['PA decision', plan.payer.replace(' (fictional)', ''), '']].concat(infusion ? [['Infusion scheduled', 'Care Coordination', '']] : []).concat([['Fulfillment', 'First dose', '']]);
+    } else if (r === 'Fulfillment') {
+      tasks.push(['Complete claim, clinical and operational checks before dispensing ' + c.drug + (d.quantity_limit ? ' (' + d.quantity_limit + ')' : ''), 'Fulfillment · ' + due]);
+      if (d.member_cost) tasks.push(['Verify adjudicated patient responsibility; plan rule: ' + d.member_cost, 'Financial Navigation · optional, check copay assistance']);
+      script = 'The documented formulary supports your medication. Our team must complete claim, clinical and operational checks before arranging delivery' + (d.member_cost ? '; the plan cost-share rule is ' + d.member_cost + ', with final patient responsibility still to be verified' : '') + '.';
+      journey = [['Investigation', 'BenefitsIQ · done', 'd'], ['Review', 'Approved by you', 'd'], ['Dispense', 'Fulfillment', 'n'], ['Delivery', 'To the patient', '']];
+    } else if (r === 'Prescriber outreach') {
+      (list(d.missing_information).length ? list(d.missing_information) : ['The information BenefitsIQ flagged']).forEach(function (x) { tasks.push(['Request from prescriber: ' + x, 'Outreach · ' + prescriber + ' · follow up in 2 business days']); });
+      tasks.push(['Run BenefitsIQ again when it arrives', 'Patient Access · then prepare the PA']);
+      script = 'We are waiting for some information from your doctor before we can ask your insurance for approval. No action is needed from you today.';
+      journey = [['Investigation', 'BenefitsIQ · done', 'd'], ['Review', 'Approved by you', 'd'], ['Prescriber outreach', 'Outreach team', 'n'], ['Run again', 'BenefitsIQ', ''], ['PA preparation', 'Patient Access', '']];
+    } else if (r === 'Financial Navigation') {
+      tasks.push(['Review funding and formulary-exception options', 'Financial Navigation · ' + due + ' · no therapy suggestions']);
+      tasks.push(['Tell the prescriber a formulary exception would be needed', 'Outreach · ' + prescriber]);
+      script = 'Your plan does not list this medication. Our team is reviewing the options with your doctor and will contact you.';
+      journey = [['Investigation', 'BenefitsIQ · done', 'd'], ['Review', 'Approved by you', 'd'], ['Financial Navigation', 'Options review', 'n'], ['Exception decision', plan.payer.replace(' (fictional)', ''), '']];
+    } else {
+      tasks.push(['Review the case', team[0] + ' · ' + due]);
+      script = 'Our team is reviewing your coverage and will contact you with the next step.';
+      journey = [['Investigation', 'BenefitsIQ · done', 'd'], ['Review', 'Approved by you', 'd'], [team[0], team[1], 'n']];
+    }
+    var pkg = ['Coverage Truth Summary (' + (handoffOpen === 'Edited and approved' ? 'edited and approved by you' : 'approved by you') + ')'];
+    if (docs.length) pkg.push('PA documentation checklist · ' + on + ' of ' + docs.length + ' on file');
+    pkg.push('Evidence · ' + list(d.citations).length + ' cited sources with responses'); pkg.push('Audit trail · run, review, approval');
+    var note = [d.benefit_pathway ? d.benefit_pathway + ' benefit' : '', d.prior_authorization === 'Required' ? 'PA required' : d.prior_authorization === 'Not required' ? 'No PA' : '', d.step_therapy ? 'Step: ' + d.step_therapy : '', docs.length ? 'PA docs ' + on + '/' + docs.length : '', infusion ? 'Infusion center only' : ''].filter(Boolean).join('. ') + '.';
+    return { team: team, sla: (urgent ? m.request + ' · same business day' : 'Refill · 2 business days'), payer: plan.payer.replace(' (fictional)', '') + (d.prior_authorization === 'Required' ? ' · PA via payer portal' : ''), tasks: tasks, pkg: pkg, note: note, script: script, journey: journey };
+  }
+  function kv(k, v) { var r = el('div', 'kv2'); r.appendChild(el('span', '', k)); r.appendChild(el('b', '', v)); return r; }
+  function boxWith(title) { var b = el('div', 'box'); b.appendChild(el('h5', '', title)); return b; }
+  function openHandoff(kind) {
+    if (!run || run.action) return;
+    handoffOpen = kind; var d = run.decision; var h = handoffFor(selected, d); run.handoff = h;
+    var box = $('handoff'); box.textContent = '';
+    var hh = el('div', 'hh'); hh.appendChild(icon('arrow', 'bq-logo')); var t = el('div'); t.appendChild(el('b', '', 'Route to ' + h.team[0])); t.appendChild(el('small', '', 'Review the handoff. Nothing is sent until you confirm.')); hh.appendChild(t); box.appendChild(hh);
+    var hb = el('div', 'hb'); var left = el('div'); var right = el('div');
+    var dest = boxWith('Destination'); dest.appendChild(kv('Queue', h.team[0])); dest.appendChild(kv('Assigned to', h.team[1])); dest.appendChild(kv('Priority / SLA', h.sla)); dest.appendChild(kv('Payer', h.payer)); left.appendChild(dest);
+    var tk = boxWith('Tasks created for the next teams');
+    h.tasks.forEach(function (x, i) { var r = el('div', 'task'); r.appendChild(el('span', 'n', String(i + 1))); var tt = el('div'); tt.appendChild(el('b', '', x[0])); tt.appendChild(el('span', '', x[1])); r.appendChild(tt); tk.appendChild(r); });
+    left.appendChild(tk);
+    var pk = boxWith('Sent with the case'); h.pkg.forEach(function (x) { var r = el('div', 'chk'); r.appendChild(icon('okc')); r.appendChild(el('span', '', x)); pk.appendChild(r); }); right.appendChild(pk);
+    var nt = boxWith('Note to the receiving team (optional)'); var ta = el('textarea', 'input'); ta.id = 'ho-note'; ta.value = h.note; ta.setAttribute('aria-label', 'Note to the receiving team'); nt.appendChild(ta); right.appendChild(nt);
+    var sc = boxWith('What the call center can tell the patient'); sc.appendChild(el('div', 'script', '"' + h.script + '"')); sc.appendChild(el('p', 'hint', 'Not sent. Patient contact stays with the existing process.')); right.appendChild(sc);
+    hb.appendChild(left); hb.appendChild(right); box.appendChild(hb);
+    var hf = el('div', 'hf');
+    var go = el('button', 'btn approve', 'Confirm and route'); go.type = 'button'; go.id = 'confirm-route';
+    go.addEventListener('click', function () { var n = ($('ho-note').value || '').trim(); finish(kind, (run.editDetail ? run.editDetail + ' | ' : '') + (n ? 'note: ' + n : '')); });
+    var back = el('button', 'btn', 'Back to summary'); back.type = 'button'; back.id = 'back-summary';
+    back.addEventListener('click', function () { handoffOpen = ''; $('handoff').hidden = true; $('result').hidden = false; renderWorkflow(); });
+    hf.appendChild(go); hf.appendChild(back); hf.appendChild(el('span', 'boundary-note', 'You approve; BenefitsIQ only prepares the handoff.')); box.appendChild(hf);
+    $('result').hidden = true; box.hidden = false; renderWorkflow();
+    box.scrollIntoView({ block: 'nearest' });
+  }
+  var taskSeq = 20417;
+  function nextOpenKey() {
+    var all = worklist(); var i = all.indexOf(selected);
+    for (var k = 1; k <= all.length; k++) { var c = all[(i + k) % all.length]; if (!outcomes[c.key]) return c.key; }
+    return null;
+  }
+  function finishButtons(card) {
+    var row = el('div', 'row'); row.style.marginTop = 'var(--sp-3)';
+    var view = el('button', 'btn', 'View summary'); view.type = 'button'; view.id = 'view-summary';
+    view.addEventListener('click', function () { var r = $('result'); r.hidden = !r.hidden; view.textContent = r.hidden ? 'View summary' : 'Hide summary'; });
+    row.appendChild(view); card.appendChild(row);
+  }
+  function finish(action, detail) {
+    if (!run || run.action) return;
+    run.action = action; run.detail = detail || ''; run.decidedAt = Date.now(); outcomes[run.key] = action; handoffOpen = '';
+    ['approve', 'edit', 'reject', 'escalate'].forEach(function (id) { $(id).disabled = true; });
+    ['edit-box', 'reason-box', 'handoff', 'result', 'gate-note'].forEach(function (id) { $(id).hidden = true; });
+    var box = $('route'); box.textContent = ''; box.hidden = false;
+    var card = el('div', 'routed' + (isRouted(action) ? '' : ' is-held'));
+    var top = el('div', 'top'); var info = el('div');
+    var nextKey = nextOpenKey();
+    var next = el('button', 'btn', 'Open next referral →'); next.type = 'button'; next.id = 'next-ref'; next.disabled = !nextKey;
+    next.addEventListener('click', function () { if (nextKey) select(nextKey); });
+    if (isRouted(action)) {
+      var h = run.handoff || handoffFor(selected, run.decision); taskSeq += 1; run.task = h.team[2] + '-' + taskSeq;
+      var inv = (run.ready - run.started) / 1000; var rev = (run.decidedAt - run.ready) / 1000;
+      var saved = Math.max(0, BASELINE_MIN - (inv + rev) / 60); run.saved = saved.toFixed(1); savedLog.push(saved);
+      var mean = savedLog.reduce(function (a, b) { return a + b; }, 0) / savedLog.length;
+      top.appendChild(icon('okc'));
+      info.appendChild(el('div', 'big', 'Routed to ' + h.team[0]));
+      info.appendChild(el('div', '', 'Task ' + run.task + ' created · ' + h.sla + ' · summary, ' + (docsOf(run.decision).length ? 'PA checklist, ' : '') + 'evidence and audit trail attached (simulated)'));
+      top.appendChild(info); top.appendChild(next); card.appendChild(top);
+      var j = el('div', 'journey'); h.journey.forEach(function (x) { var s = el('div', x[2]); s.appendChild(el('i')); s.appendChild(el('b', '', x[0])); s.appendChild(document.createTextNode(x[1])); j.appendChild(s); }); card.appendChild(j);
+      var st = el('div', 'stats');
+      [[mmss(inv), 'BenefitsIQ investigation'], [mmss(rev), 'Your review'], [saved.toFixed(1) + ' min', 'Saved vs. ' + BASELINE_MIN + ' min baseline*'], [mean.toFixed(1) + ' min', 'Average saved this visit · ' + savedLog.length + ' case' + (savedLog.length === 1 ? '' : 's')]].forEach(function (x) { var s = el('div', 'stat2'); s.appendChild(el('b', '', x[0])); s.appendChild(el('span', '', x[1])); st.appendChild(s); });
+      card.appendChild(st);
+      card.appendChild(el('p', 'hint', '*The baseline is a prototype assumption: the midpoint of the 15 to 20 minutes of manual investigation in the plan. Handling time is measured on this screen.'));
+    } else {
+      top.appendChild(icon('xc'));
+      info.appendChild(el('div', 'big', action === 'Rejected' ? 'Rejected. Nothing was routed.' : 'Escalated to ' + (run.decision.decision === 'Refused' ? 'Clinical pharmacist review' : 'Benefits Specialist review') + '. Nothing was routed.'));
+      info.appendChild(el('div', '', 'Reason recorded: ' + detail));
+      top.appendChild(info); top.appendChild(next); card.appendChild(top);
+    }
+    finishButtons(card); box.appendChild(card);
+    renderLog(); renderCases(); renderWorkflow(); renderStepper();
+  }
+  $('approve').addEventListener('click', function () { openHandoff('Approved'); });
+  $('edit').addEventListener('click', function () {
+    if (!run || run.action) return;
+    var sel = $('edit-route'); sel.textContent = '';
+    ROUTES.forEach(function (r) { var o = el('option', '', r); o.value = r; sel.appendChild(o); });
+    sel.value = run.decision.route_to || ROUTES[0];
+    $('edit-benefit').value = ['Pharmacy', 'Medical', 'Unclear'].indexOf(run.decision.benefit_pathway) >= 0 ? run.decision.benefit_pathway : 'Unclear';
+    $('edit-pa').value = ['Required', 'Not required', 'Unclear', 'Not applicable'].indexOf(run.decision.prior_authorization) >= 0 ? run.decision.prior_authorization : 'Unclear';
+    $('edit-action').value = run.decision.recommended_action || '';
+    $('edit-missing').value = list(run.decision.missing_information).join('\n');
+    $('edit-note').value = '';
+    $('edit-box').hidden = false; $('reason-box').hidden = true; $('edit-action').focus();
+  });
+  $('edit-cancel').addEventListener('click', function () { $('edit-box').hidden = true; });
+  $('edit-go').addEventListener('click', function () {
+    if (!run || run.action) return;
+    var d = run.decision; var changes = [];
+    if ($('edit-benefit').value !== d.benefit_pathway) changes.push('benefit ' + d.benefit_pathway + ' -> ' + $('edit-benefit').value);
+    if ($('edit-pa').value !== d.prior_authorization) changes.push('PA ' + d.prior_authorization + ' -> ' + $('edit-pa').value);
+    if ($('edit-route').value !== d.route_to) changes.push('route ' + d.route_to + ' -> ' + $('edit-route').value);
+    var action = $('edit-action').value.trim(); if (action && action !== d.recommended_action) changes.push('next action rewritten');
+    d.benefit_pathway = $('edit-benefit').value; d.prior_authorization = $('edit-pa').value; d.route_to = $('edit-route').value;
+    if (action) d.recommended_action = action;
+    d.missing_information = $('edit-missing').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+    var note = $('edit-note').value.trim();
+    run.editDetail = (changes.length ? changes.join('; ') : 'no field changed') + (note ? ' | reviewer note: ' + note : '');
+    renderRec(d); renderFacts(d); renderAttention(d, run.check);
+    $('edit-box').hidden = true;
+    openHandoff('Edited and approved');
+  });
+  var pending = '';
+  function askReason(kind) {
+    if (!run || run.action) return;
+    pending = kind; $('edit-box').hidden = true; $('reason-box').hidden = false; $('reason').value = '';
+    $('reason-label').textContent = kind === 'Rejected' ? 'Why you reject it, in one line' : 'Why you escalate, in one line';
+    $('reason-go').textContent = kind === 'Rejected' ? 'Reject with this reason' : 'Escalate with this reason';
+    if (kind === 'Escalated' && run.decision.decision === 'Refused') $('reason').value = 'Therapy choice is clinical: clinical pharmacist to confirm one therapy with the prescriber.';
+    $('reason').focus();
+  }
+  $('reject').addEventListener('click', function () { askReason('Rejected'); });
+  $('escalate').addEventListener('click', function () { askReason('Escalated'); });
+  $('reason-cancel').addEventListener('click', function () { $('reason-box').hidden = true; });
+  $('reason-go').addEventListener('click', function () { var reason = $('reason').value.trim(); if (!reason) { $('reason').focus(); return; } finish(pending, reason); });
+  $('reason').addEventListener('keydown', function (event) { if (event.key === 'Enter') $('reason-go').click(); });
+
+  // Menu items outside this prototype say so, instead of doing nothing.
+  var toastTimer = 0;
+  document.querySelectorAll('[data-soon]').forEach(function (node) {
+    node.addEventListener('click', function () {
+      var what = node.getAttribute('data-soon'); if (!what) return;
+      $('toast').textContent = what + ' is part of the CareTrack mock-up only. This prototype shows the Benefits Investigation activity with BenefitsIQ.';
+      $('toast').hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function () { $('toast').hidden = true; }, 3200);
+    });
+  });
+
+  // ================================================================ audit trail: every run and every human decision
+  function actionClass(a) { return a === 'Approved' ? 'action-approve' : a === 'Edited and approved' ? 'action-edit' : a === 'Rejected' ? 'action-reject' : 'action-escalate'; }
+  function renderLog() {
+    var log = $('log'); log.textContent = '';
+    if (!runs.length) log.appendChild(el('div', 'line', 'No runs yet. Every BenefitsIQ run and every human decision is listed here.'));
+    runs.slice().reverse().forEach(function (item) {
+      var line = el('div', 'line'); line.setAttribute('data-run', item.key);
+      line.appendChild(el('span', 't', item.time));
+      line.appendChild(el('span', '', item.key));
+      line.appendChild(el('span', '', (item.decision.decision || '?') + ' · conf ' + confLabel(item.decision.confidence).n + (item.sample ? ' · sample' : ' · AI')));
+      line.appendChild(el('span', item.action ? actionClass(item.action) : '', item.action ? item.action + (item.task ? ' · ' + item.task : '') + (item.saved ? ' (' + item.saved + ' min saved)' : '') + (item.detail ? ': ' + item.detail : '') : 'awaiting human review'));
+      log.appendChild(line);
+    });
+    var n = runs.length + runs.filter(function (r) { return r.action; }).length;
+    $('audit-meta').textContent = n + (n === 1 ? ' entry' : ' entries');
+    $('download').disabled = !runs.length;
+  }
+  $('download').addEventListener('click', function () {
+    var quote = function (value) { return '"' + String(value).replace(/"/g, '""') + '"'; };
+    var csv = ['Time,Case,Decision,Confidence,Route,Human action,Task,Detail,Minutes saved,Source'].concat(runs.map(function (item) {
+      return [item.time, item.key, item.decision.decision, confLabel(item.decision.confidence).n, item.decision.route_to, item.action || 'awaiting review', item.task || '', item.detail || '', item.saved || '', item.sample ? 'Sample' : 'AI'].map(quote).join(',');
+    })).join('\r\n');
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); link.download = 'benefitsiq-audit-trail.csv';
+    document.body.appendChild(link); link.click(); link.remove();
+  });
+
+  // ================================================================ evals: cases, not impressions
+  function summarize(d) {
+    var parts = ['Decision: ' + (d.decision || '?')];
+    if (d.formulary_tier) parts.push(d.formulary_tier);
+    parts.push('PA: ' + (d.prior_authorization || '?'));
+    parts.push('Step: ' + (d.step_therapy || '?'));
+    if (d.quantity_limit) parts.push('Qty: ' + d.quantity_limit);
+    if (d.member_cost) parts.push('Cost: ' + d.member_cost);
+    parts.push('Route: ' + (d.route_to || '?'));
+    parts.push('Confidence ' + confLabel(d.confidence).n);
+    var missing = list(d.missing_information); if (missing.length) parts.push('Missing: ' + missing.join('; '));
+    var docs = Array.isArray(d.documentation_checklist) ? d.documentation_checklist : []; if (docs.length) parts.push('PA docs: ' + docs.map(function (x) { return x.item + ' ' + x.status; }).join(', '));
+    return parts.join(' · ') + '. Why: ' + (d.why || '(none)');
+  }
+  function renderEvals() {
+    var count = { Pass: 0, 'Needs work': 0, Fail: 0 }; var ran = 0;
+    evals.forEach(function (row) { if (row.actual) ran += 1; if (count[row.verdict] !== undefined) count[row.verdict] += 1; });
+    var board = $('scoreboard'); board.textContent = '';
+    [['ok', count.Pass, 'Pass'], ['warn', count['Needs work'], 'Needs work'], ['danger', count.Fail, 'Fail'], ['', ran + ' of ' + EVALS.length, 'Cases run']].forEach(function (stat) {
+      var box = el('div', 'stat ' + stat[0]); box.appendChild(el('div', 'n', String(stat[1]))); box.appendChild(el('div', 'l', stat[2])); board.appendChild(box);
+    });
+    if (RECORDED.date) $('evals-note').textContent = 'Recorded by the author on ' + RECORDED.date + ', after really running each case. You can run them again here.';
+    var body = $('evals'); body.textContent = '';
+    EVALS.forEach(function (item, index) {
+      var row = el('tr'); var state = evals[index];
+      var name = el('td'); name.setAttribute('data-label', 'Case'); name.appendChild(el('b', '', item.label)); name.appendChild(el('div', 'muted', item.key)); row.appendChild(name);
+      var expected = el('td', '', item.expected); expected.setAttribute('data-label', 'Expected'); row.appendChild(expected);
+      var actual = el('td'); actual.setAttribute('data-label', 'Actual');
+      actual.appendChild(el('div', state.actual ? '' : 'muted', state.actual || 'Not run yet.'));
+      var go = el('button', 'btn', state.actual ? 'Run again' : 'Run'); go.type = 'button'; go.setAttribute('data-eval', String(index)); go.style.marginTop = 'var(--sp-2)';
+      go.addEventListener('click', function () { runEval(index, go); });
+      actual.appendChild(go); row.appendChild(actual);
+      var verdict = el('td'); verdict.setAttribute('data-label', 'Verdict');
+      var pick = el('select', 'input'); pick.setAttribute('aria-label', 'Verdict for ' + item.label);
+      ['', 'Pass', 'Needs work', 'Fail'].forEach(function (value) { var option = el('option', '', value || 'Choose'); option.value = value; pick.appendChild(option); });
+      pick.value = state.verdict; pick.disabled = !state.actual;
+      pick.addEventListener('change', function () { state.verdict = pick.value; renderEvals(); });
+      var note = el('input', 'input'); note.placeholder = 'What you saw, in one line'; note.value = state.note; note.style.marginTop = 'var(--sp-2)'; note.setAttribute('aria-label', 'Note for ' + item.label);
+      note.addEventListener('input', function () { state.note = note.value; });
+      verdict.appendChild(pick); verdict.appendChild(note); row.appendChild(verdict);
+      body.appendChild(row);
+    });
+  }
+  function runEval(index, button) {
+    if (busy) return;
+    var c = caseByKey(EVALS[index].key); busy = true; button.disabled = true; button.textContent = 'Running';
+    decide(c).then(function (result) {
+      var d = result.decision || {}; var check = checksFor(d, c, knownIds(sourcesFor(c)));
+      evals[index].actual = summarize(d) + (check.unknown.length ? ' [Cited sources not in the context: ' + check.unknown.join(', ') + ']' : '') + (result.sample ? ' (sample, not AI)' : '');
+    }).catch(function (error) {
+      evals[index].actual = 'Did not run: ' + (error.message || 'something went wrong.');
+    }).then(function () { busy = false; renderEvals(); });
+  }
+  function resultsText() {
+    var lines = ['BenefitsIQ eval results'];
+    EVALS.forEach(function (item, index) {
+      var state = evals[index];
+      lines.push((index + 1) + '. ' + item.label + ' (' + item.key + '). Expected: ' + item.expected + ' Actual: ' + (state.actual || 'not run') + ' Verdict: ' + (state.verdict || 'not judged') + (state.note ? '. Note: ' + state.note : '.'));
+    });
+    lines.push('', 'Improvement made', 'Before: ' + ($('imp-before').value.trim() || '(not written)'), 'Change: ' + ($('imp-change').value.trim() || '(not written)'), 'After: ' + ($('imp-after').value.trim() || '(not written)'));
+    lines.push('', 'Known limitations'); LIMITS.forEach(function (limit) { lines.push('- ' + limit); });
+    return lines.join('\n');
+  }
+  $('copy-results').addEventListener('click', function () {
+    var text = resultsText(); var box = $('results-text');
+    var shown = function () { box.value = text; box.hidden = false; box.style.minHeight = '220px'; box.focus(); box.select(); $('copied').textContent = 'Select the text below and copy it.'; };
+    if (!navigator.clipboard || !navigator.clipboard.writeText) { shown(); return; }
+    navigator.clipboard.writeText(text).then(function () { $('copied').textContent = 'Copied. Paste it where you need it.'; }, shown);
+  });
+
+  // ================================================================ the synthetic data, as files (plans.json, members.json, members_summary.csv)
+  function exportPlans() {
+    var out = {};
+    Object.keys(PLANS).forEach(function (id) {
+      var p = PLANS[id]; var f = {};
+      Object.keys(FORMULARY[id]).forEach(function (d) {
+        var r = FORMULARY[id][d];
+        f[d] = r === X ? { status: 'Excluded', benefit: DRUGS[d].benefit, scope: 'Documented benefit path only; other paths and exceptions not established' } : { status: 'Covered', tier: r.tier, tier_name: TIERS[r.tier] || null, prior_authorization: r.pa, step_therapy_requires: r.step || null, days_supply: r.days, quantity_limit: quantity(r), benefit: DRUGS[d].benefit, site_of_care: DRUGS[d].site, pa_clinical_criteria: CRITERIA[d] || [] };
+      });
+      out[id] = { name: p.name, payer: p.payer, group: p.group, bin: p.bin, cost_share: { tier1_copay: p.t1, tier2_copay: p.t2, tier3_copay: p.t3, tier4_coinsurance_pct: p.t4pct, tier4_max_per_fill: p.t4cap }, formulary: f };
+    });
+    return out;
+  }
+  function exportMembers() {
+    return MEMBERS.map(function (m) {
+      return { member_id: m.id, first_name: m.first, last_initial: m.last, age: m.age, sex: m.sex, state: m.state, plan_id: m.plan, diagnosis: m.diagnosis, requested_drug: m.drug, prior_medications: m.prior, request_type: m.request, prescriber: m.prescriber, referral_id: m.referral, referral_channel: m.channel, received: m.received, ground_truth_determination: m.ground_truth_determination };
+    });
+  }
+  function exportCsv() {
+    var cols = ['member_id', 'first_name', 'age', 'sex', 'state', 'plan_id', 'diagnosis', 'requested_drug', 'prior_medications', 'request_type', 'gt_decision', 'gt_tier', 'gt_prior_authorization', 'gt_step_therapy', 'gt_quantity_limit', 'gt_member_cost'];
+    var q = function (v) { v = String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    return [cols.join(',')].concat(MEMBERS.map(function (m) { var g = m.ground_truth_determination;
+      return [m.id, m.first, m.age, m.sex, m.state, m.plan, m.diagnosis, m.drug, m.prior.join('; '), m.request, g.decision, g.tier, g.pa, g.step, g.days, g.cost].map(q).join(','); })).join('\n') + '\n';
+  }
+  function save(name, text, type) {
+    var link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([text], { type: type })); link.download = name;
+    document.body.appendChild(link); link.click(); link.remove();
+  }
+  $('dl-plans').addEventListener('click', function () { save('plans.json', JSON.stringify(exportPlans(), null, 2) + '\n', 'application/json'); });
+  $('dl-members').addEventListener('click', function () { save('members.json', JSON.stringify(exportMembers(), null, 2) + '\n', 'application/json'); });
+  $('dl-csv').addEventListener('click', function () { save('members_summary.csv', exportCsv(), 'text/csv'); });
+
+  // ================================================================ views
+  document.querySelectorAll('.tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var view = tab.getAttribute('data-view');
+      document.querySelectorAll('.tab').forEach(function (other) { var on = other === tab; other.classList.toggle('is-active', on); other.setAttribute('aria-pressed', String(on)); });
+      $('view-console').hidden = view !== 'console'; $('view-evals').hidden = view !== 'evals';
+      if (view === 'evals') renderEvals();
+    });
+  });
+
+  var counted = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'][EVALS.length] || String(EVALS.length);
+  $('evals-head').textContent = counted + ' cases, judged by a person';
+  $('imp-before').value = RECORDED.improvement.before; $('imp-change').value = RECORDED.improvement.change; $('imp-after').value = RECORDED.improvement.after;
+  LIMITS.forEach(function (limit) { $('limits').appendChild(el('li', '', limit)); });
+  // For the author's own checks: the answer key, held back from the agent.
+  window.BenefitsIQ_debug = { exportPlans: exportPlans, exportMembers: exportMembers, exportCsv: exportCsv, CASES: CASES, MEMBERS: MEMBERS, sampleFor: sampleFor, sourcesFor: sourcesFor, SYSTEM_PROMPT: SYSTEM_PROMPT };
+  renderCases(); renderLog(); renderEvals(); renderWorkflow();
+})();
+</script>
+</body>
+</html>
